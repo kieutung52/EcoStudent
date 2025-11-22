@@ -21,9 +21,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
 // Protected routes (require authentication via JWT in localStorage)
 Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
+Route::get('/checkout', [OrderController::class, 'checkout'])->name('checkout');
 Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('orders.my');
 Route::get('/sales-orders', [OrderController::class, 'salesOrders'])->name('orders.sales');
-Route::get('/checkout', [OrderController::class, 'checkout'])->name('checkout');
+Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show')->where('id', '[0-9]+');
 
 // Posts routes - IMPORTANT: /posts/create must come before /posts/{id}
 Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');

@@ -71,6 +71,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/sales-orders', [OrderController::class, 'salesOrders']); // Đơn mình bán
     Route::get('/orders/{id}', [OrderController::class, 'show']); // Chi tiết đơn hàng
     Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']); // Cập nhật trạng thái (người bán)
+    Route::post('/orders/{id}/confirm-received', [OrderController::class, 'confirmReceived']); // Xác nhận đã nhận hàng (người mua)
 
     // ========== REVIEWS (Đánh giá) ==========
     Route::get('/users/{userId}/reviews', [ReviewController::class, 'index']); // Lấy đánh giá của user

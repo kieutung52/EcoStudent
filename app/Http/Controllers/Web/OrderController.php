@@ -30,5 +30,13 @@ class OrderController extends Controller
     {
         return view('orders.checkout');
     }
+
+    /**
+     * Hiển thị chi tiết đơn hàng
+     */
+    public function show($id)
+    {
+        return view('orders.details', compact('id'));
+    }
 }
 

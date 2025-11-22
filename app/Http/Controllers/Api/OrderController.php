@@ -160,4 +160,32 @@ class OrderController extends Controller
 
         return response()->json($order);
     }
+
+    /**
+     * Người mua xác nhận đã nhận hàng
+     * POST /api/orders/{id}/confirm-received
+     */
+    public function confirmReceived($id)
+    {
+        $order = Order::findOrFail($id);
+
+        // Chỉ người mua mới được xác nhận đã nhận hàng
+        if ($order->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Không có quyền xác nhận đơn hàng này'], 403);
+        }
+
+        // Chỉ có thể xác nhận khi đơn hàng đang ở trạng thái shipping
+        if ($order->status !== 'shipping') {
+            return response()->json([
+                'message' => 'Chỉ có thể xác nhận đã nhận hàng khi đơn hàng đang được giao'
+            ], 400);
+        }
+
+        $order->update(['status' => 'completed']);
+
+        return response()->json([
+            'message' => 'Đã xác nhận nhận hàng thành công',
+            'data' => $order->load(['items', 'user:id,name,avatar', 'seller:id,name,avatar'])
+        ]);
+    }
 }

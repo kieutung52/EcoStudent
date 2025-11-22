@@ -68,37 +68,51 @@ function renderOrders(orders) {
         };
 
         html += `
-            <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
                 <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 class="font-semibold">Đơn hàng #${order.id}</h3>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-lg mb-1">Đơn hàng #${order.id}</h3>
                         <p class="text-sm text-gray-500">Người mua: ${escapeHtml(order.user?.name || 'N/A')}</p>
                         <p class="text-sm text-gray-500">Ngày đặt: ${new Date(order.created_at).toLocaleDateString('vi-VN')}</p>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <select class="status-select px-3 py-1 border rounded" data-order-id="${order.id}">
-                            <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Chờ xác nhận</option>
-                            <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Đã xác nhận</option>
-                            <option value="shipping" ${order.status === 'shipping' ? 'selected' : ''}>Đang giao</option>
-                            <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Hoàn thành</option>
-                            <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Đã hủy</option>
-                        </select>
-                    </div>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}">
+                        ${getStatusText(order.status)}
+                    </span>
                 </div>
                 
-                <div class="border-t pt-4">
-                    <div class="space-y-2">
-                        ${order.items.map(item => `
-                            <div class="flex justify-between">
+                <div class="border-t pt-4 mb-4">
+                    <div class="space-y-2 mb-4">
+                        ${order.items.slice(0, 3).map(item => `
+                            <div class="flex justify-between text-sm">
                                 <span>${escapeHtml(item.product_name)} x ${item.quantity}</span>
                                 <span>${new Intl.NumberFormat('vi-VN').format(item.product_price * item.quantity)} đ</span>
                             </div>
                         `).join('')}
+                        ${order.items.length > 3 ? `<p class="text-sm text-gray-500">... và ${order.items.length - 3} sản phẩm khác</p>` : ''}
                     </div>
-                    <div class="flex justify-between items-center mt-4 pt-4 border-t">
+                    <div class="flex justify-between items-center pt-4 border-t">
                         <span class="font-semibold">Tổng cộng:</span>
                         <span class="text-xl font-bold text-blue-600">${new Intl.NumberFormat('vi-VN').format(order.total_amount)} đ</span>
                     </div>
+                </div>
+
+                <div class="flex space-x-2">
+                    <a href="/orders/${order.id}" class="flex-1 text-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        Xem chi tiết
+                    </a>
+                    ${order.status === 'pending' ? `
+                        <button class="confirm-order-btn bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors" data-order-id="${order.id}">
+                            Xác nhận
+                        </button>
+                        <button class="cancel-order-btn bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors" data-order-id="${order.id}">
+                            Hủy
+                        </button>
+                    ` : ''}
+                    ${order.status === 'confirmed' ? `
+                        <button class="ship-order-btn bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors" data-order-id="${order.id}">
+                            Đang giao
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -106,14 +120,40 @@ function renderOrders(orders) {
 
     container.innerHTML = html;
 
-    // Attach status change handlers
-    document.querySelectorAll('.status-select').forEach(select => {
-        select.addEventListener('change', async function() {
+    // Attach event handlers
+    document.querySelectorAll('.confirm-order-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
             const orderId = this.dataset.orderId;
-            const newStatus = this.value;
-            await updateOrderStatus(orderId, newStatus);
+            updateOrderStatus(orderId, 'confirmed');
         });
     });
+
+    document.querySelectorAll('.cancel-order-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.dataset.orderId;
+            if (confirm('Bạn có chắc muốn hủy đơn hàng này?')) {
+                updateOrderStatus(orderId, 'cancelled');
+            }
+        });
+    });
+
+    document.querySelectorAll('.ship-order-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.dataset.orderId;
+            updateOrderStatus(orderId, 'shipping');
+        });
+    });
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'pending': 'Chờ xác nhận',
+        'confirmed': 'Đã xác nhận',
+        'shipping': 'Đang giao',
+        'completed': 'Hoàn thành',
+        'cancelled': 'Đã hủy'
+    };
+    return statusMap[status] || status;
 }
 
 async function updateOrderStatus(orderId, status) {
