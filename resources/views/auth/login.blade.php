@@ -57,6 +57,22 @@
 @endsection
 
 @section('scripts')
+<!-- Warning Modal -->
+<div id="warning-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="text-center mb-4">
+            <svg class="w-16 h-16 text-yellow-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <h3 class="text-xl font-bold text-gray-900">Cảnh báo tài khoản</h3>
+        </div>
+        <p id="warning-message" class="text-gray-700 text-center mb-6"></p>
+        <button id="confirm-warning" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            Đã hiểu, tiếp tục đăng nhập
+        </button>
+    </div>
+</div>
+
 <script>
 document.getElementById('login-form').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -77,13 +93,30 @@ document.getElementById('login-form').addEventListener('submit', async function(
         const result = await response.json();
 
         if (response.ok) {
-            // Lưu token và user vào localStorage
-            localStorage.setItem('jwt_token', result.access_token);
-            localStorage.setItem('user', JSON.stringify(result.user));
-            
-            // Redirect về trang chủ
-            window.location.href = '/';
+            const proceedLogin = () => {
+                // Lưu token và user vào localStorage
+                localStorage.setItem('jwt_token', result.access_token);
+                localStorage.setItem('user', JSON.stringify(result.user));
+                
+                // Redirect về trang chủ
+                window.location.href = '/';
+            };
+
+            if (result.warning_message) {
+                // Show warning modal
+                const modal = document.getElementById('warning-modal');
+                document.getElementById('warning-message').textContent = result.warning_message;
+                modal.classList.remove('hidden');
+
+                document.getElementById('confirm-warning').onclick = function() {
+                    modal.classList.add('hidden');
+                    proceedLogin();
+                };
+            } else {
+                proceedLogin();
+            }
         } else {
+            // Handle error (including BANNED 403)
             alert(result.message || 'Đăng nhập thất bại');
         }
     } catch (error) {

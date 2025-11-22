@@ -11,7 +11,6 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\ReportController;
-use App\Http\Controllers\Api\ChatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,6 +64,7 @@ Route::middleware('auth:api')->group(function () {
     // ========== CART (Giỏ hàng) ==========
     Route::get('/cart', [CartController::class, 'index']); // Lấy giỏ hàng
     Route::post('/cart', [CartController::class, 'store']); // Thêm vào giỏ
+    Route::put('/cart/{id}', [CartController::class, 'update']); // Cập nhật số lượng
     Route::delete('/cart/{id}', [CartController::class, 'destroy']); // Xóa khỏi giỏ
 
     // ========== ORDERS (Đơn hàng) ==========
@@ -84,13 +84,14 @@ Route::middleware('auth:api')->group(function () {
     // ========== REPORTS (Báo cáo) ==========
     Route::post('/posts/{postId}/reports', [ReportController::class, 'store']); // Báo cáo bài viết
 
-    // ========== CHAT (Tin nhắn) ==========
-    Route::get('/conversations', [ChatController::class, 'index']); // Lấy danh sách hội thoại
-    Route::post('/messages', [ChatController::class, 'sendMessage']); // Gửi tin nhắn
-    Route::get('/conversations/{id}/messages', [ChatController::class, 'getMessages']); // Lấy tin nhắn của hội thoại
+    // ========== REPORTS (Báo cáo) ==========
+    Route::post('/posts/{postId}/reports', [ReportController::class, 'store']); // Báo cáo bài viết
 
     // ========== ADMIN ROUTES (Yêu cầu role ADMIN) ==========
     Route::middleware(['admin'])->prefix('admin')->group(function () {
+        
+        // Dashboard
+        Route::get('/dashboard', [\App\Http\Controllers\Api\AdminController::class, 'dashboard']);
         
         // Universities Management
         Route::post('/universities', [UniversityController::class, 'store']);

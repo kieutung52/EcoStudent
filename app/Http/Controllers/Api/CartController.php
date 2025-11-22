@@ -31,12 +31,41 @@ class CartController extends Controller
             return response()->json(['message' => 'Số lượng sản phẩm không đủ'], 400);
         }
 
-        $cart = Cart::updateOrCreate(
-            ['user_id' => Auth::id(), 'product_id' => $request->product_id],
-            ['quantity' => DB::raw("quantity + $request->quantity")]
-        );
+        $cart = Cart::where('user_id', Auth::id())
+            ->where('product_id', $request->product_id)
+            ->first();
+
+        if ($cart) {
+            $cart->quantity += $request->quantity;
+            $cart->save();
+        } else {
+            $cart = Cart::create([
+                'user_id' => Auth::id(),
+                'product_id' => $request->product_id,
+                'quantity' => $request->quantity
+            ]);
+        }
 
         return response()->json($cart, 201);
+    }
+
+    // Cập nhật số lượng
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'quantity' => 'required|integer|min:1'
+        ]);
+
+        $cart = Cart::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $product = Product::find($cart->product_id);
+
+        if ($product->quantity < $request->quantity) {
+            return response()->json(['message' => 'Số lượng sản phẩm không đủ'], 400);
+        }
+
+        $cart->update(['quantity' => $request->quantity]);
+
+        return response()->json(['message' => 'Cập nhật giỏ hàng thành công', 'data' => $cart]);
     }
 
     // Xóa khỏi giỏ

@@ -105,6 +105,11 @@ function renderOrders(orders) {
                             Đã nhận hàng
                         </button>
                     ` : ''}
+                    ${order.status === 'completed' ? `
+                        <button class="review-btn bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors" data-order-id="${order.id}">
+                            Đánh giá
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -112,11 +117,96 @@ function renderOrders(orders) {
 
     container.innerHTML = html;
 
+    // Review Modal Logic
+    const reviewModal = document.getElementById('review-modal');
+    const reviewForm = document.getElementById('review-form');
+    const closeReviewBtn = document.getElementById('close-review-modal');
+    let currentReviewOrderId = null;
+
+    // Initialize Star Rating
+    const starContainer = document.getElementById('star-rating-container');
+    const ratingInput = document.getElementById('review-rating');
+    
+    function renderStars(rating) {
+        starContainer.innerHTML = '';
+        for (let i = 1; i <= 5; i++) {
+            const star = document.createElement('button');
+            star.type = 'button';
+            star.className = `w-8 h-8 focus:outline-none transition-colors ${i <= rating ? 'text-yellow-400' : 'text-gray-300'}`;
+            star.innerHTML = `
+                <svg class="w-full h-full fill-current" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+            `;
+            star.addEventListener('click', () => {
+                ratingInput.value = i;
+                renderStars(i);
+            });
+            starContainer.appendChild(star);
+        }
+    }
+    renderStars(5); // Default 5 stars
+
+    function openReviewModal(orderId) {
+        currentReviewOrderId = orderId;
+        reviewModal.classList.remove('hidden');
+        renderStars(5); // Reset to 5
+        ratingInput.value = 5;
+    }
+
+    closeReviewBtn.addEventListener('click', () => {
+        reviewModal.classList.add('hidden');
+        reviewForm.reset();
+        currentReviewOrderId = null;
+    });
+
+    reviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentReviewOrderId) return;
+
+        const token = localStorage.getItem('jwt_token');
+        const rating = document.getElementById('review-rating').value;
+        const comment = document.getElementById('review-comment').value;
+
+        try {
+            const response = await fetch(`/api/orders/${currentReviewOrderId}/reviews`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ rating, comment })
+            });
+
+            if (response.ok) {
+                alert('Đánh giá thành công!');
+                reviewModal.classList.add('hidden');
+                reviewForm.reset();
+                loadOrders(); // Reload to update UI
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Lỗi khi gửi đánh giá');
+            }
+        } catch (error) {
+            console.error('Review error:', error);
+            alert('Có lỗi xảy ra');
+        }
+    });
+
     // Attach event handlers
     document.querySelectorAll('.confirm-received-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const orderId = this.dataset.orderId;
             confirmReceived(orderId);
+        });
+    });
+
+    document.querySelectorAll('.review-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.dataset.orderId;
+            openReviewModal(orderId);
         });
     });
 }
@@ -172,4 +262,34 @@ function escapeHtml(text) {
 loadOrders();
 </script>
 @endsection
+
+<!-- Review Modal -->
+<div id="review-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-900">Đánh giá đơn hàng</h3>
+            <button id="close-review-modal" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <form id="review-form">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Đánh giá sao</label>
+                <div class="flex space-x-2" id="star-rating-container">
+                    <!-- Stars will be rendered here -->
+                </div>
+                <input type="hidden" id="review-rating" value="5">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nhận xét</label>
+                <textarea id="review-comment" rows="4" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                Gửi đánh giá
+            </button>
+        </form>
+    </div>
+</div>
 

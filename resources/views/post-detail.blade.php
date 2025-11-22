@@ -105,8 +105,11 @@ function renderPostDetail(post) {
                                 </svg>
                             </div>`;
 
+                        const isSoldOut = product.quantity === 0 || product.is_sold;
+                        
                         return `
-                            <div class="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+                            <div class="border rounded-lg p-4 hover:shadow-lg transition-shadow relative ${isSoldOut ? 'bg-gray-50' : ''}">
+                                ${isSoldOut ? '<div class="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-50 z-10 rounded-lg"><span class="bg-red-600 text-white px-3 py-1 rounded font-bold transform -rotate-12">HẾT HÀNG</span></div>' : ''}
                                 ${imageHtml}
                                 <h4 class="font-semibold mt-2 text-gray-900">${escapeHtml(product.name)}</h4>
                                 <p class="text-xl font-bold text-blue-600 mt-1">
@@ -114,7 +117,11 @@ function renderPostDetail(post) {
                                 </p>
                                 <p class="text-sm text-gray-600 mt-1">Số lượng: ${product.quantity}</p>
                                 ${product.description ? `<p class="text-sm text-gray-700 mt-2">${escapeHtml(product.description)}</p>` : ''}
-                                ${product.is_sold ? '<span class="inline-block mt-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Đã bán</span>' : ''}
+                                ${isSoldOut ? '' : `
+                                    <button class="mt-3 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors add-to-cart-btn z-20 relative" data-product-id="${product.id}">
+                                        Thêm vào giỏ
+                                    </button>
+                                `}
                             </div>
                         `;
                     }).join('')}
@@ -189,6 +196,48 @@ function renderPostDetail(post) {
                 deletePost(postId);
             }
         });
+    }
+
+    // Attach add to cart handlers
+    container.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const productId = this.dataset.productId;
+            await addToCart(productId);
+        });
+    });
+}
+
+async function addToCart(productId) {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+        alert('Vui lòng đăng nhập để mua hàng');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/cart', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: 1
+            })
+        });
+
+        if (response.ok) {
+            alert('Đã thêm vào giỏ hàng');
+        } else {
+            const error = await response.json();
+            alert(error.message || 'Có lỗi xảy ra');
+        }
+    } catch (error) {
+        console.error('Add to cart error:', error);
+        alert('Có lỗi xảy ra');
     }
 }
 

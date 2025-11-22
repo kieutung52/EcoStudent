@@ -92,15 +92,60 @@ async function loadDashboard() {
     }
 
     try {
-        // Load stats (cần tạo API endpoint hoặc tính từ các API hiện có)
-        // Tạm thời để placeholder
-        document.getElementById('total-users').textContent = '-';
-        document.getElementById('total-posts').textContent = '-';
-        document.getElementById('pending-reports').textContent = '-';
-        document.getElementById('total-orders').textContent = '-';
+        const response = await fetch('/api/admin/dashboard', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update stats
+            document.getElementById('total-users').textContent = data.total_users;
+            document.getElementById('total-posts').textContent = data.total_posts;
+            document.getElementById('pending-reports').textContent = data.pending_reports;
+            document.getElementById('total-orders').textContent = data.total_orders;
+
+            // Update recent posts
+            const recentPostsContainer = document.getElementById('recent-posts');
+            if (data.recent_posts && data.recent_posts.length > 0) {
+                recentPostsContainer.innerHTML = data.recent_posts.map(post => `
+                    <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div>
+                            <p class="font-medium text-sm truncate w-64">${escapeHtml(post.title)}</p>
+                            <p class="text-xs text-gray-500">${escapeHtml(post.user?.name || 'N/A')} • ${new Date(post.created_at).toLocaleDateString('vi-VN')}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs rounded-full ${getStatusColor(post.status)}">
+                            ${post.status}
+                        </span>
+                    </div>
+                `).join('');
+            } else {
+                recentPostsContainer.innerHTML = '<p class="text-center text-gray-500 py-4">Chưa có bài viết nào</p>';
+            }
+        }
     } catch (error) {
         console.error('Load dashboard error:', error);
     }
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'pending': 'bg-yellow-100 text-yellow-800',
+        'approved': 'bg-green-100 text-green-800',
+        'rejected': 'bg-red-100 text-red-800',
+        'hidden': 'bg-gray-100 text-gray-800',
+        'sold_out': 'bg-blue-100 text-blue-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 loadDashboard();

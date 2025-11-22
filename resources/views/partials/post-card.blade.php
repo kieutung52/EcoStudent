@@ -75,6 +75,13 @@
                                 </div>
                             </div>
 
+                            <!-- Sold Out Overlay -->
+                            @if($product->quantity === 0 || $product->is_sold)
+                                <div class="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-50 z-10">
+                                    <span class="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold transform -rotate-12 shadow-md">HẾT HÀNG</span>
+                                </div>
+                            @endif
+
                             <!-- Overlay cho sản phẩm thứ 4 nếu có > 4 sản phẩm -->
                             @if($index === 3 && $remainingCount > 0)
                                 <div class="absolute inset-0 bg-black/60 flex items-center justify-center z-20 rounded-lg">

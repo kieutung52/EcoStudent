@@ -18,18 +18,60 @@ class PostController extends Controller
     public function index(Request $request)
     {
         $query = Post::with(['user', 'products', 'university', 'likes'])
-                     ->where('status', 'approved') // Chỉ hiển thị bài đã duyệt
-                     ->orderBy('created_at', 'desc');
+                     ->where('status', 'approved'); // Chỉ hiển thị bài đã duyệt
 
         // Filter theo trường ĐH
-        if ($request->has('university_id')) {
+        if ($request->has('university_id') && $request->university_id) {
             $query->where('university_id', $request->university_id);
         }
 
+        // Filter theo danh mục (Category)
+        if ($request->has('category_id') && $request->category_id) {
+            $query->whereHas('products', function ($q) use ($request) {
+                $q->where('category_id', $request->category_id);
+            });
+        }
+
+        // Filter theo khoảng giá (Price Range)
+        if ($request->has('price_min') && is_numeric($request->price_min)) {
+            $query->whereHas('products', function ($q) use ($request) {
+                $q->where('price', '>=', $request->price_min);
+            });
+        }
+        if ($request->has('price_max') && is_numeric($request->price_max)) {
+            $query->whereHas('products', function ($q) use ($request) {
+                $q->where('price', '<=', $request->price_max);
+            });
+        }
+
         // Tìm kiếm
-        if ($request->has('keyword')) {
+        if ($request->has('keyword') && $request->keyword) {
             $keyword = $request->keyword;
-            $query->where('title', 'like', "%$keyword%");
+            $query->where(function($q) use ($keyword) {
+                $q->where('title', 'like', "%$keyword%")
+                  ->orWhere('content', 'like', "%$keyword%")
+                  ->orWhereHas('products', function($pq) use ($keyword) {
+                      $pq->where('name', 'like', "%$keyword%");
+                  });
+            });
+        }
+
+        // Sắp xếp (Sort)
+        $sortBy = $request->input('sort_by', 'newest');
+        switch ($sortBy) {
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'most_viewed':
+                $query->orderBy('view_count', 'desc');
+                break;
+            case 'most_liked':
+                $query->withCount('likes')->orderBy('likes_count', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
         }
 
         return response()->json($query->paginate(10));
@@ -202,7 +244,10 @@ class PostController extends Controller
             'status' => 'sometimes|in:pending,approved,rejected,hidden,sold_out'
         ]);
 
-        $post->update($request->only(['title', 'content', 'university_id', 'status']));
+        $data = $request->only(['title', 'content', 'university_id']);
+        $data['status'] = 'pending'; // Luôn reset về pending khi update
+
+        $post->update($data);
 
         return response()->json([
             'message' => 'Cập nhật bài viết thành công',

@@ -78,17 +78,34 @@ class OrderController extends Controller
                         'quantity' => $data['quantity']
                     ]);
 
-                    // --- ĐOẠN SỬA LỖI ---
-                    // Thay vì gọi decrement() trực tiếp (gây lỗi protected method),
-                    // ta trừ thủ công và save(). Cách này an toàn hơn và chuẩn logic.
                     $productToUpdate = $data['product'];
                     $productToUpdate->quantity -= $data['quantity'];
                     $productToUpdate->save();
+                    
+                    // Check if all products in the post are sold out
+                    $post = $productToUpdate->post;
+                    $allSoldOut = true;
+                    foreach ($post->products as $p) {
+                        if ($p->quantity > 0) {
+                            $allSoldOut = false;
+                            break;
+                        }
+                    }
+                    
+                    if ($allSoldOut) {
+                        $post->update(['status' => 'hidden']);
+                    }
                     // --------------------
                 }
                 
                 $createdOrders[] = $order->id;
             }
+
+            // Xóa các sản phẩm đã mua khỏi giỏ hàng
+            $productIds = collect($request->items)->pluck('product_id');
+            \App\Models\Cart::where('user_id', Auth::id())
+                ->whereIn('product_id', $productIds)
+                ->delete();
 
             DB::commit();
             return response()->json(['message' => 'Đặt hàng thành công', 'orders' => $createdOrders], 201);

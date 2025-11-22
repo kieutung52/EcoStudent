@@ -166,24 +166,37 @@ class AuthController extends Controller
         $user = Auth::user();
 
         // Kiểm tra trạng thái tài khoản
-        if (!$user->is_active || $user->status !== 'ACTIVE') {
-            Auth::logout(); // Xóa session
+        if ($user->status === 'BANNED') {
+            Auth::logout();
+            return response()->json([
+                'message' => 'Tài khoản của bạn đang bị khóa do phạm liên tiếp 2 lỗi trong vòng 1 tuần vui lòng liên hệ admin'
+            ], 403);
+        }
+
+        if (!$user->is_active || $user->status === 'SHUT_DOWN') {
+            Auth::logout();
             return response()->json([
                 'message' => 'Tài khoản đã bị khóa hoặc không hoạt động'
             ], 403);
         }
 
         // Tạo JWT token từ user đã authenticated
-        // Có thể dùng JWTAuth::fromUser($user) hoặc JWTAuth::fromUser(Auth::user())
         $token = JWTAuth::fromUser($user);
 
-        return response()->json([
+        $response = [
             'message' => 'Đăng nhập thành công',
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'expires_in' => config('jwt.ttl') * 60, // Thời gian hết hạn (giây)
+            'expires_in' => config('jwt.ttl') * 60,
             'user' => $user->load('university')
-        ]);
+        ];
+
+        // Nếu status là WARNING, thêm warning_message vào response
+        if ($user->status === 'WARNING') {
+            $response['warning_message'] = 'Tài khoản của bạn đã vi phạm nội quy nếu tiếp tục vi phạm thêm lỗi trong vòng 1 tuần nữa thì có thể sẽ bị khóa tài khoản';
+        }
+
+        return response()->json($response);
     }
 
     /**
