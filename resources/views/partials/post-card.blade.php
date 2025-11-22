@@ -3,8 +3,8 @@
     // We'll check this in JavaScript instead
     $products = $post->products;
     $productCount = $products->count();
-    $displayProducts = $products->take(5);
-    $remainingCount = max(0, $productCount - 5);
+    $displayProducts = $products->take(4); // Chỉ hiển thị 4 sản phẩm đầu
+    $remainingCount = max(0, $productCount - 4);
     $isLiked = false; // Will be set via JavaScript
 @endphp
 
@@ -44,8 +44,9 @@
                     <div class="relative group cursor-pointer product-item" 
                          data-product-id="{{ $product->id }}"
                          data-post-id="{{ $post->id }}"
-                         data-product-index="{{ $index }}">
-                        <div class="aspect-square bg-gray-200 relative overflow-hidden">
+                         data-product-index="{{ $index }}"
+                         data-inline-view="true">
+                        <div class="aspect-square bg-gray-200 relative overflow-hidden rounded-lg">
                             @if($product->image)
                                 <img src="{{ asset($product->image) }}" 
                                      alt="{{ $product->name }}" 
@@ -58,39 +59,39 @@
                                 </div>
                             @endif
                             
-                            <!-- Price Overlay -->
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                                <p class="text-white font-semibold text-sm">{{ number_format($product->price, 0, ',', '.') }} đ</p>
-                            </div>
-
-                            <!-- Product Name (optional, small text) -->
-                            <div class="absolute top-2 left-2 right-2">
-                                <p class="text-white text-xs font-medium bg-black/50 px-2 py-1 rounded truncate">{{ $product->name }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-
-                <!-- Remaining Products Indicator (Facebook style) -->
-                @if($remainingCount > 0)
-                    <div class="relative group cursor-pointer product-item-more" 
-                         data-post-id="{{ $post->id }}"
-                         data-start-index="5">
-                        <div class="aspect-square bg-gray-200 relative overflow-hidden">
-                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <div class="text-center text-white">
-                                    <p class="text-2xl font-bold">+{{ $remainingCount }}</p>
-                                    <p class="text-sm">sản phẩm</p>
+                            <!-- Product Name - Cải thiện để dễ nhìn hơn -->
+                            <div class="absolute top-2 left-2 right-2 z-10">
+                                <div class="bg-black/80 backdrop-blur-sm px-2 py-1.5 rounded-md shadow-lg border border-white/20">
+                                    <p class="text-white text-xs font-semibold truncate drop-shadow-md">{{ $product->name }}</p>
                                 </div>
                             </div>
-                            @if($products->get(5))
-                                <img src="{{ $products->get(5)->image ? asset($products->get(5)->image) : 'https://via.placeholder.com/300' }}" 
-                                     alt="More products" 
-                                     class="w-full h-full object-cover opacity-50">
+
+                            <!-- Price Overlay - Cải thiện để dễ nhìn hơn -->
+                            <div class="absolute bottom-0 left-0 right-0 z-10">
+                                <div class="bg-gradient-to-t from-black/90 via-black/80 to-transparent p-2.5">
+                                    <div class="bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md shadow-lg border border-white/20 inline-block">
+                                        <p class="text-white font-bold text-sm drop-shadow-md">{{ number_format($product->price, 0, ',', '.') }} đ</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Overlay cho sản phẩm thứ 4 nếu có > 4 sản phẩm -->
+                            @if($index === 3 && $remainingCount > 0)
+                                <div class="absolute inset-0 bg-black/60 flex items-center justify-center z-20 rounded-lg">
+                                    <div class="text-center text-white">
+                                        <p class="text-3xl font-bold drop-shadow-lg">+{{ $remainingCount }}</p>
+                                        <p class="text-sm font-medium drop-shadow-md">sản phẩm</p>
+                                    </div>
+                                </div>
                             @endif
                         </div>
                     </div>
-                @endif
+                @endforeach
+            </div>
+
+            <!-- Product Detail Inline View (sẽ được hiển thị khi click vào sản phẩm) -->
+            <div id="product-detail-inline-{{ $post->id }}" class="hidden mt-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <!-- Nội dung sẽ được load bằng JavaScript -->
             </div>
         </div>
     @endif
