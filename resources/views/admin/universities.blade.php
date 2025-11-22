@@ -1,12 +1,12 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Quản lý trường đại học - EcoStudent')
 
 @section('content')
-<div class="max-w-7xl mx-auto">
+<div>
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Quản lý trường đại học</h1>
-        <button id="add-university-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        <button id="add-university-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
             + Thêm trường
         </button>
     </div>
@@ -91,15 +91,15 @@ function renderUniversities() {
     let html = '';
     universities.forEach(uni => {
         html += `
-            <div class="flex items-center justify-between p-4 border rounded-lg">
+            <div class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                 <div>
-                    <span class="font-medium">${escapeHtml(uni.name)}</span>
+                    <span class="font-medium text-gray-800">${escapeHtml(uni.name)}</span>
                     ${uni.code ? `<span class="text-sm text-gray-500 ml-2">(${escapeHtml(uni.code)})</span>` : ''}
                     ${uni.address ? `<p class="text-sm text-gray-500 mt-1">${escapeHtml(uni.address)}</p>` : ''}
                 </div>
                 <div class="flex space-x-2">
-                    <button class="edit-university text-blue-600 hover:underline" data-id="${uni.id}">Sửa</button>
-                    <button class="delete-university text-red-600 hover:underline" data-id="${uni.id}">Xóa</button>
+                    <button class="edit-university bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors" data-id="${uni.id}">Sửa</button>
+                    <button class="delete-university bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors" data-id="${uni.id}">Xóa</button>
                 </div>
             </div>
         `;

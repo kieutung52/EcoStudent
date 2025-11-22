@@ -1,14 +1,14 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Quản lý báo cáo - EcoStudent')
 
 @section('content')
-<div class="max-w-7xl mx-auto">
+<div>
     <h1 class="text-3xl font-bold mb-6">Quản lý báo cáo</h1>
 
     <div class="bg-white rounded-lg shadow-lg p-6">
         <div class="mb-4">
-            <select id="filter-status" class="px-4 py-2 border rounded-lg">
+            <select id="filter-status" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 <option value="">Tất cả</option>
                 <option value="pending">Chờ xử lý</option>
                 <option value="resolved">Đã xử lý</option>
@@ -61,23 +61,23 @@ function renderReports() {
     let html = '';
     reports.forEach(report => {
         html += `
-            <div class="p-4 border rounded-lg">
+            <div class="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                 <div class="flex justify-between items-start mb-2">
                     <div>
-                        <p class="font-medium">Báo cáo từ: ${escapeHtml(report.user?.name || 'N/A')}</p>
+                        <p class="font-medium text-gray-800">Báo cáo từ: ${escapeHtml(report.user?.name || 'N/A')}</p>
                         <p class="text-sm text-gray-500">Bài viết: ${escapeHtml(report.post?.title || 'N/A')}</p>
                     </div>
-                    <span class="px-3 py-1 rounded-full text-sm ${report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
                         ${report.status === 'pending' ? 'Chờ xử lý' : 'Đã xử lý'}
                     </span>
                 </div>
                 <p class="text-gray-700 mb-3">${escapeHtml(report.reason)}</p>
                 <div class="flex space-x-2">
-                    <select class="change-status px-3 py-1 border rounded text-sm" data-report-id="${report.id}">
+                    <select class="change-status px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm" data-report-id="${report.id}">
                         <option value="pending" ${report.status === 'pending' ? 'selected' : ''}>Chờ xử lý</option>
                         <option value="resolved" ${report.status === 'resolved' ? 'selected' : ''}>Đã xử lý</option>
                     </select>
-                    <button class="delete-report text-red-600 text-sm hover:underline" data-report-id="${report.id}">Xóa</button>
+                    <button class="delete-report bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm" data-report-id="${report.id}">Xóa</button>
                 </div>
             </div>
         `;

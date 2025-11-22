@@ -1,12 +1,12 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Quản lý danh mục - EcoStudent')
 
 @section('content')
-<div class="max-w-7xl mx-auto">
+<div>
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Quản lý danh mục</h1>
-        <button id="add-category-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        <button id="add-category-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
             + Thêm danh mục
         </button>
     </div>
@@ -79,11 +79,11 @@ function renderCategories() {
     let html = '';
     categories.forEach(cat => {
         html += `
-            <div class="flex items-center justify-between p-4 border rounded-lg">
-                <span class="font-medium">${escapeHtml(cat.name)}</span>
+            <div class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                <span class="font-medium text-gray-800">${escapeHtml(cat.name)}</span>
                 <div class="flex space-x-2">
-                    <button class="edit-category text-blue-600 hover:underline" data-id="${cat.id}">Sửa</button>
-                    <button class="delete-category text-red-600 hover:underline" data-id="${cat.id}">Xóa</button>
+                    <button class="edit-category bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors" data-id="${cat.id}">Sửa</button>
+                    <button class="delete-category bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors" data-id="${cat.id}">Xóa</button>
                 </div>
             </div>
         `;

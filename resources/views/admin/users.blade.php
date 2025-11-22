@@ -1,19 +1,19 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Quản lý người dùng - EcoStudent')
 
 @section('content')
-<div class="max-w-7xl mx-auto">
+<div>
     <h1 class="text-3xl font-bold mb-6">Quản lý người dùng</h1>
 
     <div class="bg-white rounded-lg shadow-lg p-6">
         <div class="mb-4 flex space-x-4">
-            <select id="filter-role" class="px-4 py-2 border rounded-lg">
+            <select id="filter-role" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 <option value="">Tất cả</option>
                 <option value="USER">User</option>
                 <option value="ADMIN">Admin</option>
             </select>
-            <select id="filter-status" class="px-4 py-2 border rounded-lg">
+            <select id="filter-status" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 <option value="">Tất cả trạng thái</option>
                 <option value="ACTIVE">Active</option>
                 <option value="BANNED">Banned</option>
@@ -77,24 +77,24 @@ function renderUsers() {
         };
 
         html += `
-            <div class="flex items-center justify-between p-4 border rounded-lg">
+            <div class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                 <div class="flex items-center space-x-4">
                     <img src="${user.avatar ? '/storage/' + user.avatar : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name)}" 
                          alt="${escapeHtml(user.name)}" 
-                         class="w-12 h-12 rounded-full">
+                         class="w-12 h-12 rounded-full border-2 border-gray-200">
                     <div>
-                        <p class="font-medium">${escapeHtml(user.name)}</p>
+                        <p class="font-medium text-gray-800">${escapeHtml(user.name)}</p>
                         <p class="text-sm text-gray-500">${escapeHtml(user.email)}</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span class="px-3 py-1 rounded-full text-sm ${statusColors[user.status] || 'bg-gray-100'}">
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColors[user.status] || 'bg-gray-100 text-gray-800'}">
                         ${user.status}
                     </span>
-                    <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                         ${user.role}
                     </span>
-                    <select class="change-status px-3 py-1 border rounded" data-user-id="${user.id}">
+                    <select class="change-status px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" data-user-id="${user.id}">
                         <option value="ACTIVE" ${user.status === 'ACTIVE' ? 'selected' : ''}>Active</option>
                         <option value="BANNED" ${user.status === 'BANNED' ? 'selected' : ''}>Banned</option>
                         <option value="WARNING" ${user.status === 'WARNING' ? 'selected' : ''}>Warning</option>

@@ -138,13 +138,22 @@
         // Global navigation update function
         function updateNavigation() {
             const token = localStorage.getItem('jwt_token');
-            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            let user = null;
+            try {
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    user = JSON.parse(userStr);
+                }
+            } catch (e) {
+                console.error('Error parsing user from localStorage:', e);
+            }
+
+            const authButtons = document.getElementById('auth-buttons');
+            const userMenu = document.getElementById('user-menu');
+            const userNavItems = document.getElementById('user-nav-items');
 
             if (token && user) {
-                const authButtons = document.getElementById('auth-buttons');
-                const userMenu = document.getElementById('user-menu');
-                const userNavItems = document.getElementById('user-nav-items');
-                
+                // User is logged in
                 if (authButtons) authButtons.classList.add('hidden');
                 if (userMenu) userMenu.classList.remove('hidden');
                 if (userNavItems) userNavItems.classList.remove('hidden');
@@ -168,6 +177,11 @@
                         adminDropdown.classList.remove('hidden');
                         adminDropdown.href = '/admin';
                     }
+                } else {
+                    const adminDropdown = document.getElementById('dropdown-admin');
+                    if (adminDropdown) {
+                        adminDropdown.classList.add('hidden');
+                    }
                 }
                 
                 // Set dropdown links
@@ -179,10 +193,7 @@
                 if (avatarEl) avatarEl.src = user.avatar ? `/storage/${user.avatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`;
                 if (nameEl) nameEl.textContent = user.name;
             } else {
-                const authButtons = document.getElementById('auth-buttons');
-                const userMenu = document.getElementById('user-menu');
-                const userNavItems = document.getElementById('user-nav-items');
-                
+                // User is not logged in
                 if (authButtons) authButtons.classList.remove('hidden');
                 if (userMenu) userMenu.classList.add('hidden');
                 if (userNavItems) userNavItems.classList.add('hidden');
@@ -233,6 +244,9 @@
                         localStorage.removeItem('jwt_token');
                         localStorage.removeItem('user');
                         
+                        // Update navigation immediately
+                        updateNavigation();
+                        
                         // Redirect to home
                         window.location.href = '/';
                     } catch (error) {
@@ -240,6 +254,10 @@
                         // Still clear and redirect even if API call fails
                         localStorage.removeItem('jwt_token');
                         localStorage.removeItem('user');
+                        
+                        // Update navigation immediately
+                        updateNavigation();
+                        
                         window.location.href = '/';
                     }
                 });
