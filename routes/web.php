@@ -10,7 +10,6 @@ use App\Http\Controllers\Web\PostController;
 
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/posts/{id}', [HomeController::class, 'showPost'])->name('post.show');
 
 // Auth routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
@@ -25,7 +24,10 @@ Route::get('/cart', [CartController::class, 'index'])->name('cart');
 Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('orders.my');
 Route::get('/sales-orders', [OrderController::class, 'salesOrders'])->name('orders.sales');
 Route::get('/checkout', [OrderController::class, 'checkout'])->name('checkout');
+
+// Posts routes - IMPORTANT: /posts/create must come before /posts/{id}
 Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
+Route::get('/posts/{id}', [HomeController::class, 'showPost'])->name('post.show');
 
 // Admin routes
 Route::get('/admin', [\App\Http\Controllers\Web\AdminController::class, 'index'])->name('admin.dashboard');
