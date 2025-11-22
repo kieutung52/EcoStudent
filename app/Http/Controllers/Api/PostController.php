@@ -268,8 +268,11 @@ class PostController extends Controller
 
         $post->update(['status' => 'rejected']);
 
+        $user = $post->user;
+        $hasViolations = $request->has('rule_ids') && !empty($request->rule_ids);
+
         // Lưu các vi phạm nếu có
-        if ($request->has('rule_ids') && !empty($request->rule_ids)) {
+        if ($hasViolations) {
             foreach ($request->rule_ids as $ruleId) {
                 \App\Models\PostViolation::create([
                     'post_id' => $post->id,
@@ -278,10 +281,33 @@ class PostController extends Controller
                     'note' => $request->note
                 ]);
             }
+
+            // Kiểm tra và cập nhật trạng thái user
+            $oneWeekAgo = now()->subWeek();
+            
+            // Đếm số bài viết bị từ chối do vi phạm trong vòng 1 tuần (bao gồm bài hiện tại)
+            $violationsCount = Post::where('user_id', $user->id)
+                ->where('status', 'rejected')
+                ->whereHas('violations')
+                ->where('created_at', '>=', $oneWeekAgo)
+                ->count();
+
+            if ($user->status === 'WARNING' && $violationsCount >= 2) {
+                // Đã bị WARNING và có vi phạm mới trong 1 tuần (>= 2 bài bị từ chối) -> BANNED
+                $user->update([
+                    'status' => 'BANNED',
+                    'is_active' => false
+                ]);
+            } elseif ($user->status === 'ACTIVE') {
+                // Lần đầu vi phạm -> WARNING
+                $user->update([
+                    'status' => 'WARNING'
+                ]);
+            }
         }
 
         return response()->json([
-            'message' => 'Đã từ chối bài viết',
+            'message' => 'Đã từ chối bài viết' . ($hasViolations ? '. Người đăng đã bị cảnh báo.' : ''),
             'data' => $post->load(['user', 'products', 'university', 'violations.rule'])
         ]);
     }

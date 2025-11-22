@@ -45,7 +45,7 @@ function showProductModal(product, index, total) {
     const modalContent = document.getElementById('modal-content');
     
     const imageUrl = product.image 
-        ? `/storage/${product.image}` 
+        ? (product.image.startsWith('http') ? product.image : `/${product.image}`)
         : null;
     
     const imageHtml = imageUrl 

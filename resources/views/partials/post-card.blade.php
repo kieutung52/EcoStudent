@@ -47,7 +47,7 @@
                          data-product-index="{{ $index }}">
                         <div class="aspect-square bg-gray-200 relative overflow-hidden">
                             @if($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" 
+                                <img src="{{ asset($product->image) }}" 
                                      alt="{{ $product->name }}" 
                                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
                             @else
@@ -84,7 +84,7 @@
                                 </div>
                             </div>
                             @if($products->get(5))
-                                <img src="{{ $products->get(5)->image ? asset('storage/' . $products->get(5)->image) : 'https://via.placeholder.com/300' }}" 
+                                <img src="{{ $products->get(5)->image ? asset($products->get(5)->image) : 'https://via.placeholder.com/300' }}" 
                                      alt="More products" 
                                      class="w-full h-full object-cover opacity-50">
                             @endif

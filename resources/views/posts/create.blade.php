@@ -9,6 +9,22 @@
         <p class="text-gray-600">Chia sẻ đồ dùng học tập, sách vở của bạn với cộng đồng sinh viên</p>
     </div>
 
+    <!-- Rules Warning Section -->
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg">
+        <div class="flex items-start">
+            <svg class="w-6 h-6 text-yellow-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-yellow-800 mb-2">Lưu ý quan trọng về luật lệ đăng bài</h3>
+                <p class="text-yellow-700 mb-3">Vui lòng đọc kỹ các quy định dưới đây. Vi phạm luật lệ có thể dẫn đến cảnh báo hoặc khóa tài khoản.</p>
+                <div id="rules-list" class="space-y-2 max-h-60 overflow-y-auto bg-white p-4 rounded border border-yellow-200">
+                    <p class="text-gray-500 text-center">Đang tải luật lệ...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="bg-white rounded-lg shadow-lg p-6">
         <form id="create-post-form" enctype="multipart/form-data">
             <div class="mb-4">
@@ -129,6 +145,48 @@
 <script>
 let productCount = 1;
 
+// Load rules
+async function loadRules() {
+    try {
+        const response = await fetch('/api/rules');
+        if (response.ok) {
+            const rules = await response.json();
+            renderRules(rules);
+        }
+    } catch (error) {
+        console.error('Load rules error:', error);
+    }
+}
+
+function renderRules(rules) {
+    const container = document.getElementById('rules-list');
+    if (rules.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">Chưa có luật lệ nào</p>';
+        return;
+    }
+
+    let html = '<ol class="list-decimal list-inside space-y-2">';
+    rules.forEach((rule, index) => {
+        html += `
+            <li class="text-sm text-gray-700">
+                <span class="font-medium">${escapeHtml(rule.title)}:</span>
+                <span>${escapeHtml(rule.content)}</span>
+            </li>
+        `;
+    });
+    html += '</ol>';
+    container.innerHTML = html;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load rules on page load
+loadRules();
+
 document.getElementById('add-product-btn').addEventListener('click', function() {
     const container = document.getElementById('products-container');
     const categories = @json($categories);
@@ -226,8 +284,8 @@ document.getElementById('create-post-form').addEventListener('submit', async fun
 
         if (response.ok) {
             const result = await response.json();
-            alert('Đăng bài thành công!');
-            window.location.href = '/';
+            alert('Đăng bài thành công! Bài viết của bạn đang chờ admin duyệt. Bạn sẽ được thông báo khi bài viết được duyệt.');
+            window.location.href = '/profile';
         } else {
             const error = await response.json();
             alert(error.message || 'Đăng bài thất bại');
