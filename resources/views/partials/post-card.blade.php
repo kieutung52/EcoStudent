@@ -39,7 +39,7 @@
     <!-- Products Grid (Facebook style) -->
     @if($productCount > 0)
         <div class="px-4 pb-4">
-            <div class="grid grid-cols-2 gap-2 rounded-lg overflow-hidden" style="max-height: 600px;">
+            <div class="grid grid-cols-2 gap-2 rounded-lg overflow-hidden" style="max-height: 650px;">
                 @foreach($displayProducts as $index => $product)
                     <div class="relative group cursor-pointer product-item" 
                          data-product-id="{{ $product->id }}"
