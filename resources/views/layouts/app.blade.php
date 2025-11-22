@@ -55,7 +55,7 @@
 
         <!-- User Section at Bottom -->
         <div class="p-4 border-t">
-            <!-- Auth Buttons (Not logged in) -->
+            <!-- Auth Buttons (Not logged in) - Default visible -->
             <div id="auth-buttons" class="space-y-2">
                 <a href="{{ route('auth.login') }}" class="block w-full text-center px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-600">
                     Đăng nhập
@@ -141,18 +141,23 @@
             let user = null;
             try {
                 const userStr = localStorage.getItem('user');
-                if (userStr) {
+                if (userStr && userStr !== 'null') {
                     user = JSON.parse(userStr);
                 }
             } catch (e) {
                 console.error('Error parsing user from localStorage:', e);
+                // Clear invalid data
+                localStorage.removeItem('user');
             }
 
             const authButtons = document.getElementById('auth-buttons');
             const userMenu = document.getElementById('user-menu');
             const userNavItems = document.getElementById('user-nav-items');
 
-            if (token && user) {
+            // Check if user is actually logged in (has valid token and user data)
+            const isLoggedIn = token && token !== 'null' && user && user.id;
+
+            if (isLoggedIn) {
                 // User is logged in
                 if (authButtons) authButtons.classList.add('hidden');
                 if (userMenu) userMenu.classList.remove('hidden');
@@ -193,16 +198,38 @@
                 if (avatarEl) avatarEl.src = user.avatar ? `/storage/${user.avatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`;
                 if (nameEl) nameEl.textContent = user.name;
             } else {
-                // User is not logged in
-                if (authButtons) authButtons.classList.remove('hidden');
-                if (userMenu) userMenu.classList.add('hidden');
-                if (userNavItems) userNavItems.classList.add('hidden');
+                // User is not logged in - show auth buttons
+                if (authButtons) {
+                    authButtons.classList.remove('hidden');
+                    authButtons.style.display = 'block';
+                }
+                if (userMenu) {
+                    userMenu.classList.add('hidden');
+                    userMenu.style.display = 'none';
+                }
+                if (userNavItems) {
+                    userNavItems.classList.add('hidden');
+                    userNavItems.style.display = 'none';
+                }
             }
         }
 
-        // Run on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        // Run on page load - ensure it runs after DOM is ready
+        function initNavigation() {
             updateNavigation();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initNavigation);
+        } else {
+            // DOM is already ready
+            initNavigation();
+        }
+
+        // Also run when page becomes visible (in case of navigation)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Re-check navigation state after a short delay to ensure all elements are ready
+            setTimeout(updateNavigation, 100);
             
             // User dropdown toggle
             const userMenuButton = document.getElementById('user-menu-button');

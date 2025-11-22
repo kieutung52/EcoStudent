@@ -144,33 +144,50 @@ function showProductModal(product, index, total) {
     modal.classList.remove('hidden');
 }
 
-// Close modal
-document.getElementById('close-modal')?.addEventListener('click', () => {
-    document.getElementById('product-modal').classList.add('hidden');
-    currentPostData = null;
-    currentProductIndex = 0;
-});
-
-// Close on background click
-document.getElementById('product-modal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'product-modal') {
-        document.getElementById('product-modal').classList.add('hidden');
-        currentPostData = null;
-        currentProductIndex = 0;
+// Initialize modal event listeners when DOM is ready
+function initModalListeners() {
+    const closeBtn = document.getElementById('close-modal');
+    const modal = document.getElementById('product-modal');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            if (modal) {
+                modal.classList.add('hidden');
+                currentPostData = null;
+                currentProductIndex = 0;
+            }
+        });
     }
-});
 
-// Escape key to close
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        const modal = document.getElementById('product-modal');
-        if (!modal.classList.contains('hidden')) {
-            modal.classList.add('hidden');
-            currentPostData = null;
-            currentProductIndex = 0;
+    // Close on background click
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target.id === 'product-modal') {
+                modal.classList.add('hidden');
+                currentPostData = null;
+                currentProductIndex = 0;
+            }
+        });
+    }
+
+    // Escape key to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (modal && !modal.classList.contains('hidden')) {
+                modal.classList.add('hidden');
+                currentPostData = null;
+                currentProductIndex = 0;
+            }
         }
-    }
-});
+    });
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initModalListeners);
+} else {
+    initModalListeners();
+}
 
 // Helper function to escape HTML
 function escapeHtml(text) {

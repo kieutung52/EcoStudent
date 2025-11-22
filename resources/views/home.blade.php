@@ -49,51 +49,8 @@
 
 @section('scripts')
 <script>
-    // Auth handling
-    const token = localStorage.getItem('jwt_token');
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-
-    // Update navigation based on auth status
-    function updateNavigation() {
-        const token = localStorage.getItem('jwt_token');
-        const user = JSON.parse(localStorage.getItem('user') || 'null');
-
-        if (token && user) {
-            document.getElementById('auth-buttons')?.classList.add('hidden');
-            document.getElementById('user-menu')?.classList.remove('hidden');
-            
-            // Show navigation items
-            document.getElementById('nav-cart')?.classList.remove('hidden');
-            document.getElementById('nav-my-orders')?.classList.remove('hidden');
-            document.getElementById('nav-sales-orders')?.classList.remove('hidden');
-            document.getElementById('nav-create-post')?.classList.remove('hidden');
-            document.getElementById('nav-profile')?.classList.remove('hidden');
-            
-            // Set navigation links
-            document.getElementById('nav-cart').href = '/cart';
-            document.getElementById('nav-my-orders').href = '/my-orders';
-            document.getElementById('nav-sales-orders').href = '/sales-orders';
-            document.getElementById('nav-create-post').href = '/posts/create';
-            document.getElementById('nav-profile').href = '/profile';
-            
-            const avatarEl = document.getElementById('user-avatar');
-            const nameEl = document.getElementById('user-name');
-            if (avatarEl) avatarEl.src = user.avatar ? `/storage/${user.avatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`;
-            if (nameEl) nameEl.textContent = user.name;
-        } else {
-            document.getElementById('auth-buttons')?.classList.remove('hidden');
-            document.getElementById('user-menu')?.classList.add('hidden');
-            
-            // Hide navigation items
-            document.getElementById('nav-cart')?.classList.add('hidden');
-            document.getElementById('nav-my-orders')?.classList.add('hidden');
-            document.getElementById('nav-sales-orders')?.classList.add('hidden');
-            document.getElementById('nav-create-post')?.classList.add('hidden');
-            document.getElementById('nav-profile')?.classList.add('hidden');
-        }
-    }
-
-    updateNavigation();
+    // Note: updateNavigation() is already defined in app.blade.php layout
+    // We don't need to redefine it here, just ensure it's called after page load
 
     // Filter handlers
     document.getElementById('university-filter')?.addEventListener('change', (e) => {
@@ -120,19 +77,28 @@
         }
     });
 
-    // Product click handlers
+    // Product click handlers - use event delegation for dynamically loaded content
     document.addEventListener('DOMContentLoaded', function() {
-        // Product items click
-        document.querySelectorAll('.product-item, .product-item-more').forEach(item => {
-            item.addEventListener('click', function() {
-                const postId = this.dataset.postId;
-                const productId = this.dataset.productId;
-                const productIndex = parseInt(this.dataset.productIndex || this.dataset.startIndex || 0);
+        // Product items click - use event delegation
+        document.body.addEventListener('click', function(e) {
+            const productItem = e.target.closest('.product-item, .product-item-more');
+            if (productItem) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const postId = productItem.dataset.postId;
+                const productId = productItem.dataset.productId;
+                const productIndex = parseInt(productItem.dataset.productIndex || productItem.dataset.startIndex || 0);
+                
+                console.log('Product clicked:', { postId, productId, productIndex });
                 
                 if (window.loadProductModal) {
                     window.loadProductModal(postId, productId || null, productIndex);
+                } else {
+                    console.error('loadProductModal function not found. Make sure product-modal.js is loaded.');
+                    alert('Chức năng xem chi tiết sản phẩm đang được tải. Vui lòng thử lại sau.');
                 }
-            });
+            }
         });
 
         // Like button handlers
