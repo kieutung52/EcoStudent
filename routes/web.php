@@ -26,8 +26,9 @@ Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('orders.my'
 Route::get('/sales-orders', [OrderController::class, 'salesOrders'])->name('orders.sales');
 Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show')->where('id', '[0-9]+');
 
-// Posts routes - IMPORTANT: /posts/create must come before /posts/{id}
+// Posts routes - IMPORTANT: /posts/create and /posts/{id}/edit must come before /posts/{id}
 Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
+Route::get('/posts/{id}/edit', [PostController::class, 'edit'])->name('posts.edit');
 Route::get('/posts/{id}', [HomeController::class, 'showPost'])->name('post.show');
 
 // Admin routes

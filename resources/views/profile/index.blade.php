@@ -337,6 +337,13 @@ async function loadMyPosts() {
             container.innerHTML = html;
 
             // Attach event listeners
+            document.querySelectorAll('.edit-post').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const postId = this.dataset.postId;
+                    window.location.href = `/posts/${postId}/edit`;
+                });
+            });
+
             document.querySelectorAll('.delete-post').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const postId = this.dataset.postId;

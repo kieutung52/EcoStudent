@@ -16,5 +16,16 @@ class PostController extends Controller
         $categories = \App\Models\Category::all();
         return view('posts.create', compact('universities', 'categories'));
     }
+
+    /**
+     * Hiển thị trang sửa bài viết
+     */
+    public function edit($id)
+    {
+        $post = \App\Models\Post::with(['products', 'university'])->findOrFail($id);
+        $universities = \App\Models\University::all();
+        $categories = \App\Models\Category::all();
+        return view('posts.edit', compact('post', 'universities', 'categories'));
+    }
 }
 
