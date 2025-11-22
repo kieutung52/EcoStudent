@@ -35,6 +35,19 @@ class PostController extends Controller
         return response()->json($query->paginate(10));
     }
 
+    /**
+     * Lấy danh sách bài viết của user hiện tại
+     * GET /api/my-posts
+     */
+    public function myPosts(Request $request)
+    {
+        $query = Post::with(['products', 'university', 'likes'])
+                     ->where('user_id', Auth::id())
+                     ->orderBy('created_at', 'desc');
+
+        return response()->json($query->paginate(10));
+    }
+
     // Tạo bài viết mới (Kèm sản phẩm + Ảnh)
     public function store(Request $request)
     {

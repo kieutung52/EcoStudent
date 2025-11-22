@@ -4,7 +4,10 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Đăng bài mới</h1>
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold mb-2">Đăng bài mới</h1>
+        <p class="text-gray-600">Chia sẻ đồ dùng học tập, sách vở của bạn với cộng đồng sinh viên</p>
+    </div>
 
     <div class="bg-white rounded-lg shadow-lg p-6">
         <form id="create-post-form" enctype="multipart/form-data">
@@ -41,7 +44,10 @@
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Sản phẩm *</label>
                 <div id="products-container" class="space-y-4">
-                    <div class="product-item border rounded-lg p-4">
+                    <div class="product-item border rounded-lg p-4 bg-gray-50">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold text-gray-800">Sản phẩm 1</h3>
+                        </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Tên sản phẩm *</label>
@@ -96,15 +102,24 @@
                 </div>
                 <button type="button" 
                         id="add-product-btn"
-                        class="mt-2 text-blue-600 hover:underline">
-                    + Thêm sản phẩm
+                        class="mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span>Thêm sản phẩm</span>
                 </button>
             </div>
 
-            <button type="submit" 
-                    class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
-                Đăng bài
-            </button>
+            <div class="flex space-x-4 mt-6">
+                <button type="submit" 
+                        class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    Đăng bài
+                </button>
+                <a href="{{ route('home') }}" 
+                   class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                    Hủy
+                </a>
+            </div>
         </form>
     </div>
 </div>
@@ -119,10 +134,10 @@ document.getElementById('add-product-btn').addEventListener('click', function() 
     const categories = @json($categories);
     
     const html = `
-        <div class="product-item border rounded-lg p-4">
+        <div class="product-item border rounded-lg p-4 bg-gray-50">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold">Sản phẩm ${productCount + 1}</h3>
-                <button type="button" class="remove-product text-red-600 hover:underline">Xóa</button>
+                <h3 class="font-semibold text-gray-800">Sản phẩm ${productCount + 1}</h3>
+                <button type="button" class="remove-product bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition-colors text-sm">Xóa</button>
             </div>
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>

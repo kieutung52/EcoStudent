@@ -92,17 +92,17 @@
     <div class="flex-1 flex flex-col min-w-0">
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto">
-            <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="max-w-7xl mx-auto px-4 py-6 min-h-[calc(100vh-200px)]">
                 @yield('content')
             </div>
+            
+            <!-- Footer -->
+            <footer class="bg-white border-t mt-auto">
+                <div class="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600">
+                    <p>&copy; 2025 EcoStudent. Marketplace cho Sinh viên.</p>
+                </div>
+            </footer>
         </main>
-
-        <!-- Footer -->
-        <footer class="bg-white border-t mt-auto">
-            <div class="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600">
-                <p>&copy; 2025 EcoStudent. Marketplace cho Sinh viên.</p>
-            </div>
-        </footer>
     </div>
 
     <!-- Product Detail Modal -->

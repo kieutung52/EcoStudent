@@ -48,6 +48,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 
     // ========== POSTS MANAGEMENT ==========
+    Route::get('/my-posts', [PostController::class, 'myPosts']); // Lấy bài viết của user hiện tại
     Route::post('/posts', [PostController::class, 'store']); // Tạo bài viết
     Route::put('/posts/{id}', [PostController::class, 'update']); // Cập nhật bài viết
     Route::delete('/posts/{id}', [PostController::class, 'destroy']); // Xóa bài viết
