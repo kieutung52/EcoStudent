@@ -30,6 +30,9 @@
     <div class="flex-1 max-w-2xl">
         <div id="posts-container">
             @foreach($posts as $post)
+                @if ($post->status === 'pending' || $post->status === 'rejected' || $post->status === 'hidden')
+                    @continue
+                @endif
                 @include('partials.post-card', ['post' => $post])
             @endforeach
         </div>

@@ -52,12 +52,6 @@
                 <a href="{{ route('auth.register') }}" class="text-blue-600 hover:underline">Đăng ký ngay</a>
             </p>
         </div>
-
-        <div class="mt-6 p-4 bg-gray-100 rounded-lg">
-            <p class="text-sm text-gray-600 mb-2"><strong>Test Accounts:</strong></p>
-            <p class="text-xs text-gray-500">Admin: admin@ecostudent.com / password123</p>
-            <p class="text-xs text-gray-500">User: an@example.com / password123</p>
-        </div>
     </div>
 </div>
 @endsection

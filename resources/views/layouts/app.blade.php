@@ -91,17 +91,17 @@
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col min-w-0">
         <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto">
-            <div class="max-w-7xl mx-auto px-4 py-6 min-h-[calc(100vh-200px)]">
+        <main class="flex-1 overflow-y-auto  ">
+            <div class="max-w-7xl mx-auto px-4 py-6 min-h-[calc(100vh-100px)]">
                 @yield('content')
             </div>
             
             <!-- Footer -->
-            <footer class="bg-white border-t mt-auto">
+            {{-- <footer class="bg-white border-t mt-auto">
                 <div class="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600">
                     <p>&copy; 2025 EcoStudent. Marketplace cho Sinh viên.</p>
                 </div>
-            </footer>
+            </footer> --}}
         </main>
     </div>
 
