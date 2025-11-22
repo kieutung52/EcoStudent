@@ -46,5 +46,21 @@ class AdminController extends Controller
     {
         return view('admin.reports');
     }
+
+    /**
+     * Quản lý luật lệ
+     */
+    public function rules()
+    {
+        return view('admin.rules');
+    }
+
+    /**
+     * Duyệt bài viết
+     */
+    public function posts()
+    {
+        return view('admin.posts');
+    }
 }
 

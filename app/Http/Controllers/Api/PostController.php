@@ -14,11 +14,11 @@ class PostController extends Controller
 {
     use ImageUploadTrait;
 
-    // Lấy danh sách bài viết (Newsfeed)
+    // Lấy danh sách bài viết (Newsfeed) - Public route, chỉ hiển thị bài đã duyệt
     public function index(Request $request)
     {
         $query = Post::with(['user', 'products', 'university', 'likes'])
-                     ->where('status', '!=', 'hidden')
+                     ->where('status', 'approved') // Chỉ hiển thị bài đã duyệt
                      ->orderBy('created_at', 'desc');
 
         // Filter theo trường ĐH
@@ -36,6 +36,23 @@ class PostController extends Controller
     }
 
     /**
+     * Lấy tất cả bài viết cho admin (bao gồm cả pending)
+     * GET /api/admin/posts
+     */
+    public function adminIndex(Request $request)
+    {
+        $query = Post::with(['user', 'products', 'university', 'violations.rule'])
+                     ->orderBy('created_at', 'desc');
+
+        // Filter theo status
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        return response()->json($query->paginate(20));
+    }
+
+    /**
      * Lấy danh sách bài viết của user hiện tại
      * GET /api/my-posts
      */
@@ -45,7 +62,36 @@ class PostController extends Controller
                      ->where('user_id', Auth::id())
                      ->orderBy('created_at', 'desc');
 
+        // Nếu có filter status
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Nếu có filter approved_only (cho profile)
+        if ($request->has('approved_only') && $request->approved_only) {
+            $query->where('status', 'approved');
+        }
+
         return response()->json($query->paginate(10));
+    }
+
+    /**
+     * Lấy thống kê bài viết của user hiện tại
+     * GET /api/my-posts/statistics
+     */
+    public function myPostsStatistics()
+    {
+        $userId = Auth::id();
+        
+        $pending = Post::where('user_id', $userId)->where('status', 'pending')->count();
+        $rejected = Post::where('user_id', $userId)->where('status', 'rejected')->count();
+        $approved = Post::where('user_id', $userId)->where('status', 'approved')->count();
+
+        return response()->json([
+            'pending' => $pending,
+            'rejected' => $rejected,
+            'approved' => $approved
+        ]);
     }
 
     // Tạo bài viết mới (Kèm sản phẩm + Ảnh)
@@ -210,14 +256,33 @@ class PostController extends Controller
      * Từ chối bài viết (Admin only)
      * PUT /api/admin/posts/{id}/reject
      */
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
         $post = Post::findOrFail($id);
+
+        $request->validate([
+            'rule_ids' => 'nullable|array',
+            'rule_ids.*' => 'exists:rules,id',
+            'note' => 'nullable|string|max:1000'
+        ]);
+
         $post->update(['status' => 'rejected']);
+
+        // Lưu các vi phạm nếu có
+        if ($request->has('rule_ids') && !empty($request->rule_ids)) {
+            foreach ($request->rule_ids as $ruleId) {
+                \App\Models\PostViolation::create([
+                    'post_id' => $post->id,
+                    'rule_id' => $ruleId,
+                    'admin_id' => Auth::id(),
+                    'note' => $request->note
+                ]);
+            }
+        }
 
         return response()->json([
             'message' => 'Đã từ chối bài viết',
-            'data' => $post->load(['user', 'products', 'university'])
+            'data' => $post->load(['user', 'products', 'university', 'violations.rule'])
         ]);
     }
 }

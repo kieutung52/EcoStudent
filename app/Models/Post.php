@@ -49,4 +49,9 @@ class Post extends Model
     {
         return $this->hasMany(Report::class);
     }
+
+    public function violations()
+    {
+        return $this->hasMany(PostViolation::class);
+    }
 }

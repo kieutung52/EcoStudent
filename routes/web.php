@@ -36,3 +36,5 @@ Route::get('/admin/categories', [\App\Http\Controllers\Web\AdminController::clas
 Route::get('/admin/universities', [\App\Http\Controllers\Web\AdminController::class, 'universities'])->name('admin.universities');
 Route::get('/admin/users', [\App\Http\Controllers\Web\AdminController::class, 'users'])->name('admin.users');
 Route::get('/admin/reports', [\App\Http\Controllers\Web\AdminController::class, 'reports'])->name('admin.reports');
+Route::get('/admin/rules', [\App\Http\Controllers\Web\AdminController::class, 'rules'])->name('admin.rules');
+Route::get('/admin/posts', [\App\Http\Controllers\Web\AdminController::class, 'posts'])->name('admin.posts');

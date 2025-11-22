@@ -30,6 +30,12 @@
                         <a href="{{ route('admin.reports') }}" class="px-3 py-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.reports') ? 'bg-blue-50 text-blue-600' : 'text-gray-700' }}">
                             Báo cáo
                         </a>
+                        <a href="{{ route('admin.rules') }}" class="px-3 py-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.rules') ? 'bg-blue-50 text-blue-600' : 'text-gray-700' }}">
+                            Luật lệ
+                        </a>
+                        <a href="{{ route('admin.posts') }}" class="px-3 py-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.posts') ? 'bg-blue-50 text-blue-600' : 'text-gray-700' }}">
+                            Duyệt bài
+                        </a>
                     </nav>
                 </div>
                 <div class="flex items-center space-x-4">

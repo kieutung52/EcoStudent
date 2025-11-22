@@ -32,6 +32,7 @@ Route::post('/login', [AuthController::class, 'login']);
 // Master Data (Danh mục công khai)
 Route::get('/universities', [UniversityController::class, 'index']);
 Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/rules', [\App\Http\Controllers\Api\RuleController::class, 'index']); // Luật lệ công khai
 
 // Posts (Xem công khai)
 Route::get('/posts', [PostController::class, 'index']); // Newsfeed - có thể filter
@@ -49,6 +50,7 @@ Route::middleware('auth:api')->group(function () {
 
     // ========== POSTS MANAGEMENT ==========
     Route::get('/my-posts', [PostController::class, 'myPosts']); // Lấy bài viết của user hiện tại
+    Route::get('/my-posts/statistics', [PostController::class, 'myPostsStatistics']); // Thống kê bài viết
     Route::post('/posts', [PostController::class, 'store']); // Tạo bài viết
     Route::put('/posts/{id}', [PostController::class, 'update']); // Cập nhật bài viết
     Route::delete('/posts/{id}', [PostController::class, 'destroy']); // Xóa bài viết
@@ -101,8 +103,15 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
         // Posts Moderation
+        Route::get('/posts', [PostController::class, 'adminIndex']); // Danh sách bài viết (admin)
         Route::put('/posts/{id}/approve', [PostController::class, 'approve']); // Duyệt bài
         Route::put('/posts/{id}/reject', [PostController::class, 'reject']); // Từ chối bài
+
+        // Rules Management
+        Route::get('/rules', [\App\Http\Controllers\Api\RuleController::class, 'indexAdmin']); // Danh sách luật lệ (admin)
+        Route::post('/rules', [\App\Http\Controllers\Api\RuleController::class, 'store']); // Tạo luật lệ
+        Route::put('/rules/{id}', [\App\Http\Controllers\Api\RuleController::class, 'update']); // Cập nhật luật lệ
+        Route::delete('/rules/{id}', [\App\Http\Controllers\Api\RuleController::class, 'destroy']); // Xóa luật lệ
 
         // Reports Management
         Route::get('/reports', [ReportController::class, 'index']); // Danh sách báo cáo

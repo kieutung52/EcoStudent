@@ -145,6 +145,22 @@
             </a>
         </div>
 
+        <!-- Statistics -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-1">Chờ duyệt</p>
+                <p id="pending-count" class="text-2xl font-bold text-yellow-600">-</p>
+            </div>
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-1">Bị từ chối</p>
+                <p id="rejected-count" class="text-2xl font-bold text-red-600">-</p>
+            </div>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-1">Đã duyệt</p>
+                <p id="approved-count" class="text-2xl font-bold text-green-600">-</p>
+            </div>
+        </div>
+
         <div id="my-posts-container" class="space-y-4">
             <p class="text-center text-gray-500 py-8">Đang tải...</p>
         </div>
@@ -213,13 +229,36 @@ async function loadProfile() {
     }
 }
 
-// Load my posts
+// Load statistics
+async function loadStatistics() {
+    const token = localStorage.getItem('jwt_token');
+    
+    try {
+        const response = await fetch('/api/my-posts/statistics', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const stats = await response.json();
+            document.getElementById('pending-count').textContent = stats.pending || 0;
+            document.getElementById('rejected-count').textContent = stats.rejected || 0;
+            document.getElementById('approved-count').textContent = stats.approved || 0;
+        }
+    } catch (error) {
+        console.error('Load statistics error:', error);
+    }
+}
+
+// Load my posts (only approved)
 async function loadMyPosts() {
     const token = localStorage.getItem('jwt_token');
     const container = document.getElementById('my-posts-container');
     
     try {
-        const response = await fetch('/api/my-posts', {
+        const response = await fetch('/api/my-posts?approved_only=1', {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json'
@@ -440,6 +479,7 @@ function escapeHtml(text) {
 
 // Load on page load
 loadProfile();
+loadStatistics();
 loadMyPosts();
 </script>
 @endsection
