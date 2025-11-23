@@ -17,7 +17,7 @@
             @csrf
             
             <div class="mb-4">
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Họ và tên</label>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Họ và tên <span class="text-red-500">*</span></label>
                 <input type="text" 
                        id="name" 
                        name="name" 
@@ -30,7 +30,7 @@
             </div>
 
             <div class="mb-4">
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email <span class="text-red-500">*</span></label>
                 <input type="email" 
                        id="email" 
                        name="email" 
@@ -43,7 +43,7 @@
             </div>
 
             <div class="mb-4">
-                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại <span class="text-red-500">*</span></label>
                 <input type="text" 
                        id="phone" 
                        name="phone" 
@@ -56,7 +56,7 @@
             </div>
 
             <div class="mb-4">
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu</label>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu <span class="text-red-500">*</span></label>
                 <input type="password" 
                        id="password" 
                        name="password" 
@@ -68,7 +68,7 @@
             </div>
 
             <div class="mb-4">
-                <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">Xác nhận mật khẩu</label>
+                <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">Xác nhận mật khẩu <span class="text-red-500">*</span></label>
                 <input type="password" 
                        id="password_confirmation" 
                        name="password_confirmation" 

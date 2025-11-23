@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\CartController;
-use App\Http\Controllers\Api\CommentController;
+
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\ReportController;
 
@@ -36,6 +36,7 @@ Route::get('/rules', [\App\Http\Controllers\Api\RuleController::class, 'index'])
 // Posts (Xem công khai)
 Route::get('/posts', [PostController::class, 'index']); // Newsfeed - có thể filter
 Route::get('/posts/{id}', [PostController::class, 'show']); // Chi tiết bài viết
+Route::get('/users/{userId}/reviews', [ReviewController::class, 'index']); // Lấy đánh giá của user (Public)
 
 // ==================== PROTECTED ROUTES (Yêu cầu JWT authentication) ====================
 Route::middleware('auth:api')->group(function () {
@@ -55,11 +56,7 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/posts/{id}', [PostController::class, 'destroy']); // Xóa bài viết
     Route::post('/posts/{id}/like', [PostController::class, 'toggleLike']); // Like/Unlike
 
-    // ========== COMMENTS ==========
-    Route::get('/posts/{postId}/comments', [CommentController::class, 'index']); // Lấy comments
-    Route::post('/posts/{postId}/comments', [CommentController::class, 'store']); // Tạo comment
-    Route::put('/comments/{id}', [CommentController::class, 'update']); // Cập nhật comment
-    Route::delete('/comments/{id}', [CommentController::class, 'destroy']); // Xóa comment
+
 
     // ========== CART (Giỏ hàng) ==========
     Route::get('/cart', [CartController::class, 'index']); // Lấy giỏ hàng
@@ -76,7 +73,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/orders/{id}/confirm-received', [OrderController::class, 'confirmReceived']); // Xác nhận đã nhận hàng (người mua)
 
     // ========== REVIEWS (Đánh giá) ==========
-    Route::get('/users/{userId}/reviews', [ReviewController::class, 'index']); // Lấy đánh giá của user
+
     Route::post('/orders/{orderId}/reviews', [ReviewController::class, 'store']); // Tạo đánh giá
     Route::put('/reviews/{id}', [ReviewController::class, 'update']); // Cập nhật đánh giá
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']); // Xóa đánh giá
@@ -117,6 +114,7 @@ Route::middleware('auth:api')->group(function () {
         // Reports Management
         Route::get('/reports', [ReportController::class, 'index']); // Danh sách báo cáo
         Route::put('/reports/{id}', [ReportController::class, 'update']); // Cập nhật trạng thái báo cáo
+        Route::post('/reports/{id}/ban', [ReportController::class, 'ban']); // Ban bài viết từ báo cáo
         Route::delete('/reports/{id}', [ReportController::class, 'destroy']); // Xóa báo cáo
 
         // Users Management

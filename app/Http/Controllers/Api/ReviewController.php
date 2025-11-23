@@ -10,10 +10,6 @@ use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
-    /**
-     * Lấy danh sách đánh giá của một user (người bán)
-     * GET /api/users/{userId}/reviews
-     */
     public function index($userId)
     {
         $reviews = Review::where('reviewed_user_id', $userId)
@@ -24,25 +20,18 @@ class ReviewController extends Controller
         return response()->json($reviews);
     }
 
-    /**
-     * Tạo đánh giá mới (sau khi đơn hàng hoàn thành)
-     * POST /api/orders/{orderId}/reviews
-     */
     public function store(Request $request, $orderId)
     {
         $order = Order::findOrFail($orderId);
 
-        // Kiểm tra quyền: chỉ người mua mới được đánh giá
         if ($order->user_id !== Auth::id()) {
             return response()->json(['message' => 'Chỉ người mua mới được đánh giá'], 403);
         }
 
-        // Kiểm tra đơn hàng đã hoàn thành chưa
         if ($order->status !== 'completed') {
             return response()->json(['message' => 'Chỉ có thể đánh giá đơn hàng đã hoàn thành'], 400);
         }
 
-        // Kiểm tra đã đánh giá chưa
         $existingReview = Review::where('order_id', $orderId)->first();
         if ($existingReview) {
             return response()->json(['message' => 'Bạn đã đánh giá đơn hàng này rồi'], 400);
@@ -67,10 +56,6 @@ class ReviewController extends Controller
         ], 201);
     }
 
-    /**
-     * Cập nhật đánh giá (chỉ owner)
-     * PUT /api/reviews/{id}
-     */
     public function update(Request $request, $id)
     {
         $review = Review::findOrFail($id);
@@ -95,10 +80,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /**
-     * Xóa đánh giá (chỉ owner)
-     * DELETE /api/reviews/{id}
-     */
     public function destroy($id)
     {
         $review = Review::findOrFail($id);

@@ -117,32 +117,34 @@
                     <span class="like-count">{{ $post->likes->count() }}</span>
                 </button>
 
-                <!-- Comment Button -->
+                <!-- Comment Button (Now triggers Reviews) -->
                 <button class="flex items-center space-x-2 text-gray-600 hover:text-blue-600 comment-btn" 
-                        data-post-id="{{ $post->id }}">
+                        data-post-id="{{ $post->id }}"
+                        data-user-id="{{ $post->user_id }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                     </svg>
-                    <span>{{ $post->comments->count() }}</span>
+                    <span>Đánh giá</span>
+                </button>
+
+                <!-- Report Button -->
+                <button class="flex items-center space-x-2 text-gray-600 hover:text-red-600 report-btn" 
+                        data-post-id="{{ $post->id }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-8a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5h6a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1 1 0 00-1 1v3"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <span>Báo cáo</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Comments Section (Collapsible) -->
-    <div class="px-4 pb-4 comments-section hidden" data-post-id="{{ $post->id }}">
-        <div class="space-y-3 max-h-64 overflow-y-auto">
-            @foreach($post->comments->take(5) as $comment)
-                <div class="flex space-x-2">
-                    <img src="{{ $comment->user->avatar ? asset('storage/' . $comment->user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($comment->user->name) }}" 
-                         alt="{{ $comment->user->name }}" 
-                         class="w-8 h-8 rounded-full">
-                    <div class="flex-1 bg-gray-100 rounded-lg px-3 py-2">
-                        <p class="font-semibold text-sm">{{ $comment->user->name }}</p>
-                        <p class="text-sm text-gray-700">{{ $comment->content }}</p>
-                    </div>
-                </div>
-            @endforeach
+    <!-- Reviews Section (Collapsible) -->
+    <div class="px-4 pb-4 reviews-section hidden" data-post-id="{{ $post->id }}">
+        <h4 class="font-semibold text-sm mb-2 text-gray-700">Đánh giá về người bán</h4>
+        <div class="reviews-list space-y-3 max-h-64 overflow-y-auto">
+            <p class="text-center text-gray-500 text-sm py-2">Đang tải đánh giá...</p>
         </div>
     </div>
 </div>

@@ -8,14 +8,12 @@ use Illuminate\Http\Request;
 
 class UniversityController extends Controller
 {
-    // Public: Lấy danh sách trường để fill vào dropdown
     public function index()
     {
         $universities = University::all();
         return response()->json($universities);
     }
 
-    // Admin Only: Thêm trường mới
     public function store(Request $request)
     {
         $request->validate([
@@ -32,7 +30,6 @@ class UniversityController extends Controller
         ], 201);
     }
     
-    // Admin Only: Cập nhật
     public function update(Request $request, $id)
     {
         $university = University::findOrFail($id);
@@ -40,7 +37,6 @@ class UniversityController extends Controller
         return response()->json(['message' => 'Cập nhật thành công', 'data' => $university]);
     }
 
-    // Admin Only: Xóa
     public function destroy($id)
     {
         University::destroy($id);

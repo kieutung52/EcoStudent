@@ -28,7 +28,7 @@
     <div class="bg-white rounded-lg shadow-lg p-6">
         <form id="create-post-form" enctype="multipart/form-data">
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Tiêu đề *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tiêu đề <span class="text-red-500">*</span></label>
                 <input type="text" 
                        id="title" 
                        name="title" 
@@ -45,7 +45,7 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Trường đại học *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Trường đại học <span class="text-red-500">*</span></label>
                 <select id="university_id" 
                         name="university_id" 
                         required
@@ -58,7 +58,7 @@
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Sản phẩm *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Sản phẩm <span class="text-red-500">*</span></label>
                 <div id="products-container" class="space-y-4">
                     <div class="product-item border rounded-lg p-4 bg-gray-50">
                         <div class="flex justify-between items-center mb-4">
@@ -66,14 +66,14 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Tên sản phẩm *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tên sản phẩm <span class="text-red-500">*</span></label>
                                 <input type="text" 
                                        name="products[0][name]" 
                                        required
                                        class="w-full px-4 py-2 border rounded-lg">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Giá (đ) *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Giá (đ) <span class="text-red-500">*</span></label>
                                 <input type="number" 
                                        name="products[0][price]" 
                                        required
@@ -83,7 +83,7 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng <span class="text-red-500">*</span></label>
                                 <input type="number" 
                                        name="products[0][quantity]" 
                                        required
@@ -109,10 +109,31 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Ảnh sản phẩm</label>
-                            <input type="file" 
-                                   name="products[0][image]" 
-                                   accept="image/*"
-                                   class="w-full px-4 py-2 border rounded-lg">
+                            <div class="image-upload-container relative w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col justify-center items-center cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input type="file" 
+                                       id="product-image-0"
+                                       name="products[0][image]" 
+                                       accept="image/*"
+                                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                       onchange="previewImage(this, 'preview-0')">
+                                
+                                <div class="upload-placeholder text-center pointer-events-none">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <p class="mt-1 text-sm text-gray-600">Click để tải ảnh lên</p>
+                                </div>
+                                
+                                <img id="preview-0" class="hidden absolute inset-0 w-full h-full object-contain rounded-lg z-0">
+                                
+                                <button type="button" 
+                                        class="remove-image-btn hidden absolute top-2 right-2 z-20 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none"
+                                        onclick="removeImage(this, 'product-image-0', 'preview-0')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -144,6 +165,39 @@
 @section('scripts')
 <script>
 let productCount = 1;
+
+function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    const container = input.closest('.image-upload-container');
+    const placeholder = container.querySelector('.upload-placeholder');
+    const removeBtn = container.querySelector('.remove-image-btn');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            if (removeBtn) removeBtn.classList.remove('hidden');
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeImage(btn, inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    const container = btn.closest('.image-upload-container');
+    const placeholder = container.querySelector('.upload-placeholder');
+
+    input.value = ''; // Clear file input
+    preview.src = '';
+    preview.classList.add('hidden');
+    placeholder.classList.remove('hidden');
+    btn.classList.add('hidden');
+}
 
 // Load rules
 async function loadRules() {
@@ -199,14 +253,14 @@ document.getElementById('add-product-btn').addEventListener('click', function() 
             </div>
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tên sản phẩm *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tên sản phẩm <span class="text-red-500">*</span></label>
                     <input type="text" 
                            name="products[${productCount}][name]" 
                            required
                            class="w-full px-4 py-2 border rounded-lg">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Giá (đ) *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Giá (đ) <span class="text-red-500">*</span></label>
                     <input type="number" 
                            name="products[${productCount}][price]" 
                            required
@@ -216,7 +270,7 @@ document.getElementById('add-product-btn').addEventListener('click', function() 
             </div>
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng <span class="text-red-500">*</span></label>
                     <input type="number" 
                            name="products[${productCount}][quantity]" 
                            required
@@ -240,10 +294,31 @@ document.getElementById('add-product-btn').addEventListener('click', function() 
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Ảnh sản phẩm</label>
-                <input type="file" 
-                       name="products[${productCount}][image]" 
-                       accept="image/*"
-                       class="w-full px-4 py-2 border rounded-lg">
+                <div class="image-upload-container relative w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col justify-center items-center cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input type="file" 
+                           id="product-image-${productCount}"
+                           name="products[${productCount}][image]" 
+                           accept="image/*"
+                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                           onchange="previewImage(this, 'preview-${productCount}')">
+                    
+                    <div class="upload-placeholder text-center pointer-events-none">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <p class="mt-1 text-sm text-gray-600">Click để tải ảnh lên</p>
+                    </div>
+                    
+                    <img id="preview-${productCount}" class="hidden absolute inset-0 w-full h-full object-contain rounded-lg z-0">
+                    
+                    <button type="button" 
+                            class="remove-image-btn hidden absolute top-2 right-2 z-20 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none"
+                            onclick="removeImage(this, 'product-image-${productCount}', 'preview-${productCount}')">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     `;

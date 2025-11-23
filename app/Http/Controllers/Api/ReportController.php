@@ -10,15 +10,10 @@ use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
-    /**
-     * Lấy danh sách báo cáo (Admin only)
-     * GET /api/admin/reports
-     */
     public function index(Request $request)
     {
         $query = Report::with(['user:id,name', 'post:id,title']);
 
-        // Filter theo status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
@@ -28,20 +23,14 @@ class ReportController extends Controller
         return response()->json($reports);
     }
 
-    /**
-     * Tạo báo cáo mới
-     * POST /api/posts/{postId}/reports
-     */
     public function store(Request $request, $postId)
     {
         $post = Post::findOrFail($postId);
 
-        // Không được báo cáo bài của chính mình
         if ($post->user_id === Auth::id()) {
             return response()->json(['message' => 'Không thể báo cáo bài viết của chính mình'], 400);
         }
 
-        // Kiểm tra đã báo cáo chưa
         $existingReport = Report::where('user_id', Auth::id())
             ->where('post_id', $postId)
             ->first();
@@ -67,10 +56,6 @@ class ReportController extends Controller
         ], 201);
     }
 
-    /**
-     * Cập nhật trạng thái báo cáo (Admin only)
-     * PUT /api/admin/reports/{id}
-     */
     public function update(Request $request, $id)
     {
         $report = Report::findOrFail($id);
@@ -87,15 +72,69 @@ class ReportController extends Controller
         ]);
     }
 
-    /**
-     * Xóa báo cáo (Admin only)
-     * DELETE /api/admin/reports/{id}
-     */
     public function destroy($id)
     {
         Report::destroy($id);
 
         return response()->json(['message' => 'Đã xóa báo cáo']);
+    }
+
+    public function ban(Request $request, $id)
+    {
+        $report = Report::with('post.user')->findOrFail($id);
+        $post = $report->post;
+
+        if (!$post) {
+            return response()->json(['message' => 'Bài viết không tồn tại'], 404);
+        }
+
+        $request->validate([
+            'rule_ids' => 'required|array',
+            'rule_ids.*' => 'exists:rules,id',
+            'note' => 'nullable|string|max:1000'
+        ]);
+
+        // 1. Reject Post
+        $post->update(['status' => 'rejected']);
+
+        // 2. Create Violations
+        foreach ($request->rule_ids as $ruleId) {
+            \App\Models\PostViolation::create([
+                'post_id' => $post->id,
+                'rule_id' => $ruleId,
+                'admin_id' => Auth::id(),
+                'note' => $request->note
+            ]);
+        }
+
+        // 3. Punish User
+        $user = $post->user;
+        $oneWeekAgo = now()->subWeek();
+        
+        $violationsCount = Post::where('user_id', $user->id)
+            ->where('status', 'rejected')
+            ->whereHas('violations')
+            ->where('created_at', '>=', $oneWeekAgo)
+            ->count();
+
+        if ($user->status === 'WARNING' && $violationsCount >= 2) {
+            $user->update([
+                'status' => 'BANNED',
+                'is_active' => false
+            ]);
+        } elseif ($user->status === 'ACTIVE') {
+            $user->update([
+                'status' => 'WARNING'
+            ]);
+        }
+
+        // 4. Resolve Report
+        $report->update(['status' => 'resolved']);
+
+        return response()->json([
+            'message' => 'Đã cấm bài viết và xử lý vi phạm người dùng',
+            'data' => $report->load(['user', 'post'])
+        ]);
     }
 }
 

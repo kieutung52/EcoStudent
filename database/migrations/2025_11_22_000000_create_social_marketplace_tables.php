@@ -37,33 +37,10 @@ return new class extends Migration
             $table->text('comment')->nullable();
             $table->timestamps();
         });
-
-        // Bảng Conversations
-        Schema::create('conversations', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('user_one');
-            $table->unsignedBigInteger('user_two');
-            $table->timestamps();
-            
-            // Đảm bảo mỗi cặp user chỉ có 1 conversation
-            $table->unique(['user_one', 'user_two']); 
-        });
-
-        // Bảng Messages
-        Schema::create('messages', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('conversation_id')->constrained()->onDelete('cascade');
-            $table->foreignId('sender_id')->constrained('users')->onDelete('cascade');
-            $table->text('content');
-            $table->boolean('is_read')->default(false);
-            $table->timestamps();
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('messages');
-        Schema::dropIfExists('conversations');
         Schema::dropIfExists('reviews');
         Schema::dropIfExists('carts');
         Schema::dropIfExists('reports');

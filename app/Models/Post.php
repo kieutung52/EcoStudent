@@ -19,7 +19,6 @@ class Post extends Model
         'view_count'
     ];
 
-    // Relationships
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -40,10 +39,7 @@ class Post extends Model
         return $this->hasMany(PostLike::class);
     }
 
-    public function comments()
-    {
-        return $this->hasMany(Comment::class);
-    }
+
 
     public function reports()
     {

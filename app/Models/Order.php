@@ -20,13 +20,11 @@ class Order extends Model
         'note'
     ];
 
-    // Người mua
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // Người bán
     public function seller()
     {
         return $this->belongsTo(User::class, 'seller_id');

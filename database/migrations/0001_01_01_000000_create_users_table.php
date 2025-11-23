@@ -8,7 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. TẠO BẢNG UNIVERSITIES TRƯỚC
         Schema::create('universities', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
@@ -17,7 +16,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 2. TẠO BẢNG USERS SAU
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -27,7 +25,6 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('avatar')->nullable();
             
-            // Khóa ngoại
             $table->foreignId('university_id')->nullable()->constrained('universities')->onDelete('set null');
             
             $table->enum('role', ['USER', 'ADMIN'])->default('USER');
@@ -56,7 +53,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('universities'); // Xóa bảng này khi rollback
+        Schema::dropIfExists('universities');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }

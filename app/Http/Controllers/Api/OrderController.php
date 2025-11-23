@@ -12,24 +12,21 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    // Đặt hàng (Checkout)
     public function store(Request $request)
     {
         $request->validate([
-            'items' => 'required|array', // [{product_id: 1, quantity: 2}, ...]
+            'items' => 'required|array',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'shipping_address' => 'required|string',
             'phone_number' => 'required|string',
         ]);
 
-        // Group items by Seller (User ID của người đăng bài chứa sản phẩm)
         $itemsBySeller = [];
         
         foreach ($request->items as $item) {
             $product = Product::with('post')->find($item['product_id']);
             
-            // Check tồn kho
             if ($product->quantity < $item['quantity']) {
                 return response()->json(['message' => "Sản phẩm {$product->name} không đủ số lượng"], 400);
             }
@@ -52,12 +49,10 @@ class OrderController extends Controller
             foreach ($itemsBySeller as $sellerId => $items) {
                 $totalAmount = 0;
                 
-                // Tính tổng tiền
                 foreach ($items as $data) {
                     $totalAmount += $data['product']->price * $data['quantity'];
                 }
 
-                // Tạo Order
                 $order = Order::create([
                     'user_id' => Auth::id(),
                     'seller_id' => $sellerId,
@@ -68,7 +63,6 @@ class OrderController extends Controller
                     'status' => 'pending'
                 ]);
 
-                // Tạo Order Items và trừ tồn kho
                 foreach ($items as $data) {
                     OrderItem::create([
                         'order_id' => $order->id,
@@ -80,9 +74,11 @@ class OrderController extends Controller
 
                     $productToUpdate = $data['product'];
                     $productToUpdate->quantity -= $data['quantity'];
+                    if ($productToUpdate->quantity === 0) {
+                        $productToUpdate->is_sold = true;
+                    }
                     $productToUpdate->save();
                     
-                    // Check if all products in the post are sold out
                     $post = $productToUpdate->post;
                     $allSoldOut = true;
                     foreach ($post->products as $p) {
@@ -95,13 +91,11 @@ class OrderController extends Controller
                     if ($allSoldOut) {
                         $post->update(['status' => 'hidden']);
                     }
-                    // --------------------
                 }
                 
                 $createdOrders[] = $order->id;
             }
 
-            // Xóa các sản phẩm đã mua khỏi giỏ hàng
             $productIds = collect($request->items)->pluck('product_id');
             \App\Models\Cart::where('user_id', Auth::id())
                 ->whereIn('product_id', $productIds)
@@ -116,7 +110,6 @@ class OrderController extends Controller
         }
     }
 
-    // Lấy danh sách đơn hàng CỦA TÔI (Tôi mua)
     public function myOrders()
     {
         $orders = Order::where('user_id', Auth::id())
@@ -126,7 +119,6 @@ class OrderController extends Controller
         return response()->json($orders);
     }
 
-    // Lấy danh sách đơn hàng KHÁCH ĐẶT (Tôi bán)
     public function salesOrders()
     {
         $orders = Order::where('seller_id', Auth::id())
@@ -136,15 +128,10 @@ class OrderController extends Controller
         return response()->json($orders);
     }
 
-    /**
-     * Cập nhật trạng thái đơn hàng (Người bán)
-     * PUT /api/orders/{id}/status
-     */
     public function updateStatus(Request $request, $id)
     {
         $order = Order::findOrFail($id);
 
-        // Chỉ người bán mới được cập nhật trạng thái
         if ($order->seller_id !== Auth::id()) {
             return response()->json(['message' => 'Không có quyền cập nhật đơn hàng này'], 403);
         }
@@ -161,16 +148,11 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Chi tiết đơn hàng
-     * GET /api/orders/{id}
-     */
     public function show($id)
     {
         $order = Order::with(['items', 'user:id,name,avatar', 'seller:id,name,avatar'])
             ->findOrFail($id);
 
-        // Chỉ người mua hoặc người bán mới xem được hoặc Admin
         if ($order->user_id !== Auth::id() && $order->seller_id !== Auth::id() && Auth::user()->role !== 'ADMIN') {
             return response()->json(['message' => 'Không có quyền xem đơn hàng này'], 403);
         }
@@ -178,20 +160,14 @@ class OrderController extends Controller
         return response()->json($order);
     }
 
-    /**
-     * Người mua xác nhận đã nhận hàng
-     * POST /api/orders/{id}/confirm-received
-     */
     public function confirmReceived($id)
     {
         $order = Order::findOrFail($id);
 
-        // Chỉ người mua mới được xác nhận đã nhận hàng
         if ($order->user_id !== Auth::id()) {
             return response()->json(['message' => 'Không có quyền xác nhận đơn hàng này'], 403);
         }
 
-        // Chỉ có thể xác nhận khi đơn hàng đang ở trạng thái shipping
         if ($order->status !== 'shipping') {
             return response()->json([
                 'message' => 'Chỉ có thể xác nhận đã nhận hàng khi đơn hàng đang được giao'

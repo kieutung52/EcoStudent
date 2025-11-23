@@ -16,7 +16,6 @@ class PostViolation extends Model
         'note'
     ];
 
-    // Relationships
     public function post()
     {
         return $this->belongsTo(Post::class);

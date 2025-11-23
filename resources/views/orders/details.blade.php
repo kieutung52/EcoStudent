@@ -305,14 +305,77 @@ async function confirmReceived() {
         if (response.ok) {
             const result = await response.json();
             order = result.data;
-            alert('Đã xác nhận nhận hàng thành công!');
+            // alert('Đã xác nhận nhận hàng thành công!');
             renderOrderDetails();
+            
+            // Show review modal immediately
+            showReviewModal();
         } else {
             const error = await response.json();
             alert(error.message || 'Xác nhận thất bại');
         }
     } catch (error) {
         console.error('Confirm received error:', error);
+        alert('Có lỗi xảy ra');
+    }
+}
+
+// Review Modal Logic
+function showReviewModal() {
+    const modal = document.getElementById('review-modal');
+    modal.classList.remove('hidden');
+    
+    // Reset form
+    document.getElementById('review-form').reset();
+    setRating(5); // Default 5 stars
+}
+
+function hideReviewModal() {
+    document.getElementById('review-modal').classList.add('hidden');
+}
+
+function setRating(rating) {
+    document.getElementById('review-rating').value = rating;
+    const stars = document.querySelectorAll('.star-rating-btn svg');
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.classList.add('text-yellow-400');
+            star.classList.remove('text-gray-300');
+        } else {
+            star.classList.remove('text-yellow-400');
+            star.classList.add('text-gray-300');
+        }
+    });
+}
+
+async function submitReview(e) {
+    e.preventDefault();
+    const rating = document.getElementById('review-rating').value;
+    const comment = document.getElementById('review-comment').value;
+    const token = localStorage.getItem('jwt_token');
+
+    try {
+        const response = await fetch(`/api/orders/${orderId}/reviews`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ rating, comment })
+        });
+
+        if (response.ok) {
+            alert('Cảm ơn bạn đã đánh giá!');
+            hideReviewModal();
+            // Optionally reload or update UI
+        } else {
+            const error = await response.json();
+            alert(error.message || 'Gửi đánh giá thất bại');
+        }
+    } catch (error) {
+        console.error('Submit review error:', error);
         alert('Có lỗi xảy ra');
     }
 }
@@ -325,5 +388,46 @@ function escapeHtml(text) {
 
 loadOrderDetails();
 </script>
+
+<!-- Review Modal -->
+<div id="review-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <h3 class="text-xl font-bold mb-4 text-center">Đánh giá người bán</h3>
+        <form id="review-form" onsubmit="submitReview(event)">
+            <input type="hidden" id="review-rating" value="5">
+            
+            <div class="mb-4 text-center">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Mức độ hài lòng <span class="text-red-500">*</span></label>
+                <div class="flex justify-center space-x-2">
+                    ${[1, 2, 3, 4, 5].map(i => `
+                        <button type="button" class="star-rating-btn focus:outline-none" onclick="setRating(${i})">
+                            <svg class="w-8 h-8 text-yellow-400 fill-current transition-colors" viewBox="0 0 24 24">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                            </svg>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nhận xét của bạn</label>
+                <textarea id="review-comment" rows="4" 
+                    class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Chia sẻ trải nghiệm mua hàng của bạn..."></textarea>
+            </div>
+
+            <div class="flex space-x-3">
+                <button type="button" onclick="hideReviewModal()" 
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+                    Bỏ qua
+                </button>
+                <button type="submit" 
+                    class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    Gửi đánh giá
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 

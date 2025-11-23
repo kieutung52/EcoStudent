@@ -161,31 +161,19 @@ function renderPostDetail(post) {
             <span>${post.likes?.length || 0} lượt thích</span>
             <span>•</span>
             <span>${post.view_count || 0} lượt xem</span>
+            <span class="mx-2">•</span>
+            <button class="text-red-600 hover:text-red-800 flex items-center space-x-1 report-btn" onclick="openReportModal(${post.id})">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-8a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5h6a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1 1 0 00-1 1v3"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <span>Báo cáo</span>
+            </button>
         </div>
 
         ${productsHtml}
 
-        <!-- Comments Section -->
-        <div class="mt-6 pt-6 border-t">
-            <h3 class="text-xl font-semibold mb-4">Bình luận</h3>
-            <div id="comments-container" class="space-y-4">
-                ${post.comments && post.comments.length > 0 
-                    ? post.comments.map(comment => `
-                        <div class="flex space-x-3">
-                            <img src="${comment.user?.avatar ? `/storage/${comment.user.avatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user?.name || 'User')}`}" 
-                                 alt="${escapeHtml(comment.user?.name || 'User')}" 
-                                 class="w-10 h-10 rounded-full">
-                            <div class="flex-1">
-                                <p class="font-semibold text-sm">${escapeHtml(comment.user?.name || 'User')}</p>
-                                <p class="text-gray-700">${escapeHtml(comment.content)}</p>
-                                <p class="text-xs text-gray-500 mt-1">${new Date(comment.created_at).toLocaleDateString('vi-VN')}</p>
-                            </div>
-                        </div>
-                    `).join('')
-                    : '<p class="text-gray-500">Chưa có bình luận nào</p>'
-                }
-            </div>
-        </div>
+
     `;
 
     // Attach delete button handler
@@ -281,5 +269,153 @@ function escapeHtml(text) {
 // Load post on page load
 loadPostDetail();
 </script>
+<!-- Report Modal -->
+<div id="report-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <h3 class="text-xl font-bold mb-4">Báo cáo bài viết</h3>
+        <form id="report-form">
+            <input type="hidden" id="report-post-id">
+            <div class="mb-4">
+                <p class="mb-2 font-medium text-gray-700">Lý do báo cáo:</p>
+                <div id="report-rules-list" class="space-y-2 max-h-48 overflow-y-auto border p-2 rounded mb-2">
+                    <p class="text-gray-500 text-sm">Đang tải lý do...</p>
+                </div>
+                <div class="mt-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="report_reason" value="other" class="form-radio text-blue-600">
+                        <span>Lý do khác</span>
+                    </label>
+                    <textarea id="report-other-reason" class="w-full mt-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hidden" rows="3" placeholder="Nhập lý do của bạn..."></textarea>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button type="button" onclick="closeReportModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+                    Hủy
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
+                    Gửi báo cáo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
+
+@section('scripts')
+<script>
+let postId = {{ request()->route('id') }};
+let currentUser = null;
+let reportRulesLoaded = false;
+
+// ... (Existing user loading code) ...
+
+// Report Modal Logic
+async function openReportModal(id) {
+    document.getElementById('report-post-id').value = id;
+    document.getElementById('report-modal').classList.remove('hidden');
+    
+    if (!reportRulesLoaded) {
+        await loadReportRules();
+    }
+}
+
+function closeReportModal() {
+    document.getElementById('report-modal').classList.add('hidden');
+    document.getElementById('report-form').reset();
+    document.getElementById('report-other-reason').classList.add('hidden');
+}
+
+async function loadReportRules() {
+    const container = document.getElementById('report-rules-list');
+    try {
+        const response = await fetch('/api/rules');
+        if (response.ok) {
+            const rules = await response.json();
+            if (rules.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">Không có lý do cụ thể</p>';
+            } else {
+                container.innerHTML = rules.map(rule => `
+                    <label class="flex items-start space-x-2 cursor-pointer">
+                        <input type="radio" name="report_reason" value="${escapeHtml(rule.content)}" class="form-radio text-blue-600 mt-1">
+                        <span class="text-sm text-gray-700">${escapeHtml(rule.title)}: ${escapeHtml(rule.content)}</span>
+                    </label>
+                `).join('');
+            }
+            reportRulesLoaded = true;
+        }
+    } catch (error) {
+        console.error('Load rules error:', error);
+        container.innerHTML = '<p class="text-red-500 text-sm">Lỗi tải lý do</p>';
+    }
+}
+
+// Toggle other reason textarea
+document.getElementById('report-form').addEventListener('change', function(e) {
+    if (e.target.name === 'report_reason') {
+        const otherTextarea = document.getElementById('report-other-reason');
+        if (e.target.value === 'other') {
+            otherTextarea.classList.remove('hidden');
+            otherTextarea.required = true;
+        } else {
+            otherTextarea.classList.add('hidden');
+            otherTextarea.required = false;
+        }
+    }
+});
+
+// Submit Report
+document.getElementById('report-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('report-post-id').value;
+    const selectedReason = document.querySelector('input[name="report_reason"]:checked');
+    const otherReason = document.getElementById('report-other-reason').value;
+    
+    if (!selectedReason) {
+        alert('Vui lòng chọn lý do báo cáo');
+        return;
+    }
+
+    let reason = selectedReason.value;
+    if (reason === 'other') {
+        reason = otherReason;
+        if (!reason.trim()) {
+            alert('Vui lòng nhập lý do cụ thể');
+            return;
+        }
+    }
+
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+        alert('Vui lòng đăng nhập để báo cáo');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/posts/${id}/reports`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ reason })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(result.message || 'Báo cáo thành công');
+            closeReportModal();
+        } else {
+            alert(result.message || 'Báo cáo thất bại');
+        }
+    } catch (error) {
+        console.error('Report error:', error);
+        alert('Có lỗi xảy ra');
+    }
+});
+
+// ... (Existing loadPostDetail and other functions) ...
 

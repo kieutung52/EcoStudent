@@ -11,13 +11,11 @@ class Report extends Model
 
     protected $fillable = ['user_id', 'post_id', 'reason', 'status'];
 
-    // Người báo cáo
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Bài viết bị báo cáo
     public function post()
     {
         return $this->belongsTo(Post::class);

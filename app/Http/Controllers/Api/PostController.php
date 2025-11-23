@@ -14,25 +14,21 @@ class PostController extends Controller
 {
     use ImageUploadTrait;
 
-    // Lấy danh sách bài viết (Newsfeed) - Public route, chỉ hiển thị bài đã duyệt
     public function index(Request $request)
     {
         $query = Post::with(['user', 'products', 'university', 'likes'])
-                     ->where('status', 'approved'); // Chỉ hiển thị bài đã duyệt
+                     ->where('status', 'approved'); 
 
-        // Filter theo trường ĐH
         if ($request->has('university_id') && $request->university_id) {
             $query->where('university_id', $request->university_id);
         }
 
-        // Filter theo danh mục (Category)
         if ($request->has('category_id') && $request->category_id) {
             $query->whereHas('products', function ($q) use ($request) {
                 $q->where('category_id', $request->category_id);
             });
         }
 
-        // Filter theo khoảng giá (Price Range)
         if ($request->has('price_min') && is_numeric($request->price_min)) {
             $query->whereHas('products', function ($q) use ($request) {
                 $q->where('price', '>=', $request->price_min);
@@ -44,7 +40,6 @@ class PostController extends Controller
             });
         }
 
-        // Tìm kiếm
         if ($request->has('keyword') && $request->keyword) {
             $keyword = $request->keyword;
             $query->where(function($q) use ($keyword) {
@@ -56,7 +51,6 @@ class PostController extends Controller
             });
         }
 
-        // Sắp xếp (Sort)
         $sortBy = $request->input('sort_by', 'newest');
         switch ($sortBy) {
             case 'oldest':
@@ -77,16 +71,11 @@ class PostController extends Controller
         return response()->json($query->paginate(10));
     }
 
-    /**
-     * Lấy tất cả bài viết cho admin (bao gồm cả pending)
-     * GET /api/admin/posts
-     */
     public function adminIndex(Request $request)
     {
         $query = Post::with(['user', 'products', 'university', 'violations.rule'])
                      ->orderBy('created_at', 'desc');
 
-        // Filter theo status
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
         }
@@ -94,22 +83,16 @@ class PostController extends Controller
         return response()->json($query->paginate(20));
     }
 
-    /**
-     * Lấy danh sách bài viết của user hiện tại
-     * GET /api/my-posts
-     */
     public function myPosts(Request $request)
     {
         $query = Post::with(['products', 'university', 'likes'])
                      ->where('user_id', Auth::id())
                      ->orderBy('created_at', 'desc');
 
-        // Nếu có filter status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
-        // Nếu có filter approved_only (cho profile)
         if ($request->has('approved_only') && $request->approved_only) {
             $query->where('status', 'approved');
         }
@@ -117,10 +100,6 @@ class PostController extends Controller
         return response()->json($query->paginate(10));
     }
 
-    /**
-     * Lấy thống kê bài viết của user hiện tại
-     * GET /api/my-posts/statistics
-     */
     public function myPostsStatistics()
     {
         $userId = Auth::id();
@@ -136,10 +115,8 @@ class PostController extends Controller
         ]);
     }
 
-    // Tạo bài viết mới (Kèm sản phẩm + Ảnh)
     public function store(Request $request)
     {
-        // Validate dữ liệu phức tạp (Mảng products)
         $request->validate([
             'title' => 'required|string|max:255',
             'university_id' => 'required|exists:universities,id',
@@ -147,26 +124,22 @@ class PostController extends Controller
             'products.*.name' => 'required|string',
             'products.*.price' => 'required|numeric|min:0',
             'products.*.quantity' => 'required|integer|min:1',
-            'products.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate ảnh
+            'products.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
         ]);
 
-        DB::beginTransaction(); // Bắt đầu Transaction
+        DB::beginTransaction(); 
         try {
-            // 1. Tạo Post
             $post = Post::create([
                 'user_id' => Auth::id(),
                 'university_id' => $request->university_id,
                 'title' => $request->title,
                 'content' => $request->content,
-                'status' => 'pending' // Chờ duyệt
+                'status' => 'pending' 
             ]);
 
-            // 2. Tạo Products loop
             foreach ($request->products as $index => $prodData) {
                 $imagePath = null;
                 
-                // Xử lý upload ảnh từ mảng request
-                // Lưu ý: Laravel xử lý file array input hơi khác
                 if ($request->hasFile("products.$index.image")) {
                     $file = $request->file("products.$index.image");
                     $imagePath = $this->uploadImage($file, 'products');
@@ -192,47 +165,35 @@ class PostController extends Controller
         }
     }
 
-    // Chi tiết bài viết
     public function show($id)
     {
-        $post = Post::with(['user', 'products', 'comments.user', 'university'])->findOrFail($id);
-        // Tăng view
+        $post = Post::with(['user', 'products', 'university'])->findOrFail($id);
         $post->increment('view_count');
         return response()->json($post);
     }
 
-    // Xóa bài viết (Chỉ owner hoặc admin)
     public function destroy($id)
     {
         $post = Post::findOrFail($id);
 
-        // Check quyền
         if (Auth::id() !== $post->user_id && Auth::user()->role !== 'ADMIN') {
             return response()->json(['message' => 'Không có quyền xóa bài này'], 403);
         }
 
-        // Logic xóa ảnh sản phẩm đã được xử lý trong Model Product boot() (nhờ cascade delete hoặc loop xóa thủ công nếu soft delete không trigger)
-        // Vì Post dùng SoftDeletes, nên ảnh chưa xóa ngay. 
-        // Nếu muốn xóa vĩnh viễn (Force Delete) để dọn rác:
         
         foreach($post->products as $product) {
-            $this->deleteImage($product->image); // Xóa file vật lý
+            $this->deleteImage($product->image); 
         }
         
-        $post->forceDelete(); // Xóa cả DB
+        $post->forceDelete(); 
 
         return response()->json(['message' => 'Đã xóa bài viết và hình ảnh liên quan']);
     }
 
-    /**
-     * Cập nhật bài viết (Chỉ owner)
-     * PUT /api/posts/{id}
-     */
     public function update(Request $request, $id)
     {
         $post = Post::findOrFail($id);
 
-        // Check quyền
         if (Auth::id() !== $post->user_id) {
             return response()->json(['message' => 'Không có quyền sửa bài này'], 403);
         }
@@ -245,7 +206,7 @@ class PostController extends Controller
         ]);
 
         $data = $request->only(['title', 'content', 'university_id']);
-        $data['status'] = 'pending'; // Luôn reset về pending khi update
+        $data['status'] = 'pending'; 
 
         $post->update($data);
 
@@ -255,10 +216,6 @@ class PostController extends Controller
         ]);
     }
 
-    /**
-     * Like/Unlike bài viết
-     * POST /api/posts/{id}/like
-     */
     public function toggleLike($id)
     {
         $post = Post::findOrFail($id);
@@ -282,10 +239,6 @@ class PostController extends Controller
         return response()->json(['message' => $message]);
     }
 
-    /**
-     * Duyệt bài viết (Admin only)
-     * PUT /api/admin/posts/{id}/approve
-     */
     public function approve($id)
     {
         $post = Post::findOrFail($id);
@@ -297,10 +250,6 @@ class PostController extends Controller
         ]);
     }
 
-    /**
-     * Từ chối bài viết (Admin only)
-     * PUT /api/admin/posts/{id}/reject
-     */
     public function reject(Request $request, $id)
     {
         $post = Post::findOrFail($id);
@@ -316,7 +265,6 @@ class PostController extends Controller
         $user = $post->user;
         $hasViolations = $request->has('rule_ids') && !empty($request->rule_ids);
 
-        // Lưu các vi phạm nếu có
         if ($hasViolations) {
             foreach ($request->rule_ids as $ruleId) {
                 \App\Models\PostViolation::create([
@@ -327,10 +275,8 @@ class PostController extends Controller
                 ]);
             }
 
-            // Kiểm tra và cập nhật trạng thái user
             $oneWeekAgo = now()->subWeek();
             
-            // Đếm số bài viết bị từ chối do vi phạm trong vòng 1 tuần (bao gồm bài hiện tại)
             $violationsCount = Post::where('user_id', $user->id)
                 ->where('status', 'rejected')
                 ->whereHas('violations')
@@ -338,13 +284,11 @@ class PostController extends Controller
                 ->count();
 
             if ($user->status === 'WARNING' && $violationsCount >= 2) {
-                // Đã bị WARNING và có vi phạm mới trong 1 tuần (>= 2 bài bị từ chối) -> BANNED
                 $user->update([
                     'status' => 'BANNED',
                     'is_active' => false
                 ]);
             } elseif ($user->status === 'ACTIVE') {
-                // Lần đầu vi phạm -> WARNING
                 $user->update([
                     'status' => 'WARNING'
                 ]);

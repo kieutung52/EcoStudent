@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\ImageUploadTrait; // Import Trait
+use App\Traits\ImageUploadTrait; 
 
 class Product extends Model
 {
@@ -15,12 +15,10 @@ class Product extends Model
         'quantity', 'image', 'description', 'is_sold'
     ];
 
-    // Sự kiện model để tự động xóa ảnh khi xóa record
     protected static function boot()
     {
         parent::boot();
         static::deleting(function ($product) {
-            // Gọi hàm từ Trait để xóa ảnh
             if ($product->image) {
                 $product->deleteImage($product->image);
             }

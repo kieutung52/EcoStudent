@@ -16,13 +16,11 @@ class Review extends Model
         return $this->belongsTo(Order::class);
     }
 
-    // Người đánh giá (Người mua)
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewer_id');
     }
 
-    // Người được đánh giá (Người bán)
     public function reviewedUser()
     {
         return $this->belongsTo(User::class, 'reviewed_user_id');

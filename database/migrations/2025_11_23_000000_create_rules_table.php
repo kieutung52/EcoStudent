@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('rules', function (Blueprint $table) {
             $table->id();
-            $table->string('title'); // Tiêu đề luật
-            $table->text('content'); // Nội dung luật
-            $table->integer('order')->default(0); // Thứ tự hiển thị
-            $table->boolean('is_active')->default(true); // Trạng thái hoạt động
+            $table->string('title');
+            $table->text('content');
+            $table->integer('order')->default(0);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

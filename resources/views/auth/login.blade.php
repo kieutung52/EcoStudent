@@ -17,7 +17,7 @@
             @csrf
             
             <div class="mb-4">
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email <span class="text-red-500">*</span></label>
                 <input type="email" 
                        id="email" 
                        name="email" 
@@ -30,7 +30,7 @@
             </div>
 
             <div class="mb-6">
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu</label>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu <span class="text-red-500">*</span></label>
                 <input type="password" 
                        id="password" 
                        name="password" 

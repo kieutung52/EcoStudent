@@ -5,7 +5,7 @@
 @section('content')
 <div class="flex gap-6">
     <!-- Sidebar Left (Filters) -->
-    <aside class="w-64 bg-white rounded-lg shadow p-4 h-fit sticky top-20">
+    <aside class="w-64 bg-white rounded-lg shadow-lg p-4 h-fit sticky top-20">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-semibold">Bộ lọc</h2>
             <button id="clear-filters" class="text-sm text-blue-600 hover:underline">Xóa bộ lọc</button>
@@ -93,14 +93,168 @@
         <!-- Có thể thêm thông tin khác ở đây -->
     </aside>
 </div>
+<!-- Report Modal -->
+<div id="report-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <h3 class="text-xl font-bold mb-4">Báo cáo bài viết</h3>
+        <form id="report-form">
+            <input type="hidden" id="report-post-id">
+            <div class="mb-4">
+                <p class="mb-2 font-medium text-gray-700">Lý do báo cáo:</p>
+                <div id="report-rules-list" class="space-y-2 max-h-48 overflow-y-auto border p-2 rounded mb-2">
+                    <p class="text-gray-500 text-sm">Đang tải lý do...</p>
+                </div>
+                <div class="mt-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="report_reason" value="other" class="form-radio text-blue-600">
+                        <span>Lý do khác</span>
+                    </label>
+                    <textarea id="report-other-reason" class="w-full mt-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hidden" rows="3" placeholder="Nhập lý do của bạn..."></textarea>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button type="button" onclick="closeReportModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+                    Hủy
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
+                    Gửi báo cáo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
-    let currentPage = 1;
-    let isFilterActive = false;
+    // ... (Existing variables) ...
+    let reportRulesLoaded = false;
 
-    // Filter elements
+    // ... (Existing code) ...
+
+    // Report Modal Logic
+    async function openReportModal(postId) {
+        document.getElementById('report-post-id').value = postId;
+        document.getElementById('report-modal').classList.remove('hidden');
+        
+        if (!reportRulesLoaded) {
+            await loadReportRules();
+        }
+    }
+
+    function closeReportModal() {
+        document.getElementById('report-modal').classList.add('hidden');
+        document.getElementById('report-form').reset();
+        document.getElementById('report-other-reason').classList.add('hidden');
+    }
+
+    async function loadReportRules() {
+        const container = document.getElementById('report-rules-list');
+        try {
+            const response = await fetch('/api/rules');
+            if (response.ok) {
+                const rules = await response.json();
+                if (rules.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-sm">Không có lý do cụ thể</p>';
+                } else {
+                    container.innerHTML = rules.map(rule => `
+                        <label class="flex items-start space-x-2 cursor-pointer">
+                            <input type="radio" name="report_reason" value="${escapeHtml(rule.content)}" class="form-radio text-blue-600 mt-1">
+                            <span class="text-sm text-gray-700">${escapeHtml(rule.title)}: ${escapeHtml(rule.content)}</span>
+                        </label>
+                    `).join('');
+                }
+                reportRulesLoaded = true;
+            }
+        } catch (error) {
+            console.error('Load rules error:', error);
+            container.innerHTML = '<p class="text-red-500 text-sm">Lỗi tải lý do</p>';
+        }
+    }
+
+    // Toggle other reason textarea
+    document.getElementById('report-form').addEventListener('change', function(e) {
+        if (e.target.name === 'report_reason') {
+            const otherTextarea = document.getElementById('report-other-reason');
+            if (e.target.value === 'other') {
+                otherTextarea.classList.remove('hidden');
+                otherTextarea.required = true;
+            } else {
+                otherTextarea.classList.add('hidden');
+                otherTextarea.required = false;
+            }
+        }
+    });
+
+    // Submit Report
+    document.getElementById('report-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const postId = document.getElementById('report-post-id').value;
+        const selectedReason = document.querySelector('input[name="report_reason"]:checked');
+        const otherReason = document.getElementById('report-other-reason').value;
+        
+        if (!selectedReason) {
+            alert('Vui lòng chọn lý do báo cáo');
+            return;
+        }
+
+        let reason = selectedReason.value;
+        if (reason === 'other') {
+            reason = otherReason;
+            if (!reason.trim()) {
+                alert('Vui lòng nhập lý do cụ thể');
+                return;
+            }
+        }
+
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            alert('Vui lòng đăng nhập để báo cáo');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/posts/${postId}/reports`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ reason })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(result.message || 'Báo cáo thành công');
+                closeReportModal();
+            } else {
+                alert(result.message || 'Báo cáo thất bại');
+            }
+        } catch (error) {
+            console.error('Report error:', error);
+            alert('Có lỗi xảy ra');
+        }
+    });
+
+    // ... (Existing attachPostEventListeners) ...
+    function attachPostEventListeners() {
+        // ... (Existing listeners) ...
+
+        // Report buttons
+        document.querySelectorAll('.report-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const postId = this.dataset.postId;
+                openReportModal(postId);
+            });
+        });
+    }
+
+    // ... (Rest of existing code) ...
+
     const searchInput = document.getElementById('search-input');
     const sortBySelect = document.getElementById('sort-by');
     const universitySelect = document.getElementById('university-filter');
@@ -314,36 +468,15 @@
                             </button>
 
                             <button class="flex items-center space-x-2 text-gray-600 hover:text-blue-600 comment-btn" 
-                                    data-post-id="${post.id}">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                                </svg>
-                                <span>${post.comments_count || 0}</span>
-                            </button>
-
-                            <button class="flex items-center space-x-2 text-gray-600 hover:text-yellow-600 review-btn" 
                                     data-post-id="${post.id}"
                                     data-user-id="${post.user_id}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                                 </svg>
                                 <span>Đánh giá</span>
                             </button>
                         </div>
                     </div>
-                </div>
-
-                <div class="px-4 pb-4 comments-section hidden" data-post-id="${post.id}">
-                    <div class="comments-list space-y-3 max-h-64 overflow-y-auto mb-3">
-                        <p class="text-center text-gray-500 text-sm py-2">Đang tải bình luận...</p>
-                    </div>
-                    <form class="comment-form flex gap-2" data-post-id="${post.id}">
-                        <input type="text" name="content" placeholder="Viết bình luận..." 
-                            class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-                            Gửi
-                        </button>
-                    </form>
                 </div>
 
                 <div class="px-4 pb-4 reviews-section hidden" data-post-id="${post.id}">
@@ -432,34 +565,13 @@
             });
         });
 
-        // Comment buttons
+        // Comment buttons (Now triggers Reviews)
         document.querySelectorAll('.comment-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const postId = this.dataset.postId;
-                const commentsSection = document.querySelector(`.comments-section[data-post-id="${postId}"]`);
+                const userId = this.dataset.userId;
                 const reviewsSection = document.querySelector(`.reviews-section[data-post-id="${postId}"]`);
                 
-                if (reviewsSection) reviewsSection.classList.add('hidden'); // Hide reviews if open
-
-                if (commentsSection) {
-                    commentsSection.classList.toggle('hidden');
-                    if (!commentsSection.classList.contains('hidden')) {
-                        loadComments(postId);
-                    }
-                }
-            });
-        });
-
-        // Review buttons
-        document.querySelectorAll('.review-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const postId = this.dataset.postId;
-                const userId = this.dataset.userId;
-                const commentsSection = document.querySelector(`.comments-section[data-post-id="${postId}"]`);
-                const reviewsSection = document.querySelector(`.reviews-section[data-post-id="${postId}"]`);
-
-                if (commentsSection) commentsSection.classList.add('hidden'); // Hide comments if open
-
                 if (reviewsSection) {
                     reviewsSection.classList.toggle('hidden');
                     if (!reviewsSection.classList.contains('hidden')) {
@@ -469,73 +581,14 @@
             });
         });
 
-        // Comment forms
-        document.querySelectorAll('.comment-form').forEach(form => {
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
+
+        // Report buttons
+        document.querySelectorAll('.report-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
                 const postId = this.dataset.postId;
-                const content = this.querySelector('input[name="content"]').value;
-                const token = localStorage.getItem('jwt_token');
-
-                if (!token) {
-                    alert('Vui lòng đăng nhập để bình luận');
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`/api/posts/${postId}/comments`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify({ content })
-                    });
-
-                    if (response.ok) {
-                        this.reset();
-                        loadComments(postId);
-                    } else {
-                        alert('Không thể gửi bình luận');
-                    }
-                } catch (error) {
-                    console.error('Post comment error:', error);
-                }
+                openReportModal(postId);
             });
         });
-    }
-
-    async function loadComments(postId) {
-        const container = document.querySelector(`.comments-section[data-post-id="${postId}"] .comments-list`);
-        if (!container) return;
-
-        try {
-            const response = await fetch(`/api/posts/${postId}/comments`, {
-                headers: { 'Accept': 'application/json' }
-            });
-
-            if (response.ok) {
-                const comments = await response.json();
-                if (comments.length === 0) {
-                    container.innerHTML = '<p class="text-center text-gray-500 text-sm py-2">Chưa có bình luận nào</p>';
-                } else {
-                    container.innerHTML = comments.map(comment => `
-                        <div class="flex space-x-2">
-                            <img src="${comment.user?.avatar ? `/storage/${comment.user.avatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user?.name || 'User')}`}" 
-                                class="w-8 h-8 rounded-full object-cover">
-                            <div class="bg-gray-100 rounded-lg px-3 py-2 flex-1">
-                                <p class="font-semibold text-sm text-gray-900">${escapeHtml(comment.user?.name || 'User')}</p>
-                                <p class="text-sm text-gray-700">${escapeHtml(comment.content)}</p>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            }
-        } catch (error) {
-            container.innerHTML = '<p class="text-center text-red-500 text-sm py-2">Lỗi tải bình luận</p>';
-        }
     }
 
     async function loadSellerReviews(userId, postId) {

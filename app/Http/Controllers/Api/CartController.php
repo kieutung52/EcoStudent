@@ -11,14 +11,12 @@ use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    // Lấy danh sách giỏ hàng
     public function index()
     {
         $cartItems = Cart::with('product')->where('user_id', Auth::id())->get();
         return response()->json($cartItems);
     }
 
-    // Thêm vào giỏ
     public function store(Request $request)
     {
         $request->validate([
@@ -49,7 +47,6 @@ class CartController extends Controller
         return response()->json($cart, 201);
     }
 
-    // Cập nhật số lượng
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -68,7 +65,6 @@ class CartController extends Controller
         return response()->json(['message' => 'Cập nhật giỏ hàng thành công', 'data' => $cart]);
     }
 
-    // Xóa khỏi giỏ
     public function destroy($id)
     {
         Cart::where('id', $id)->where('user_id', Auth::id())->delete();

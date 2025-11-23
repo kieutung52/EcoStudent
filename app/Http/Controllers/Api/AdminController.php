@@ -11,10 +11,6 @@ use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    /**
-     * Lấy thống kê dashboard
-     * GET /api/admin/dashboard
-     */
     public function dashboard()
     {
         $totalUsers = User::count();
@@ -22,7 +18,6 @@ class AdminController extends Controller
         $pendingReports = Report::where('status', 'pending')->count();
         $totalOrders = Order::count();
 
-        // Lấy bài viết gần đây
         $recentPosts = Post::with('user:id,name')
             ->orderBy('created_at', 'desc')
             ->take(5)

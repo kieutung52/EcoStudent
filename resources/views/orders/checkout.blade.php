@@ -11,36 +11,36 @@
             <h2 class="text-xl font-semibold mb-4">Thông tin giao hàng</h2>
             <form id="checkout-form">
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Địa chỉ giao hàng</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Địa chỉ giao hàng <span class="text-red-500">*</span></label>
                     <div class="grid grid-cols-1 gap-4 mb-4">
                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">Tỉnh/Thành phố</label>
+                            <label class="block text-xs text-gray-500 mb-1">Tỉnh/Thành phố <span class="text-red-500">*</span></label>
                             <select id="province" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">Chọn Tỉnh/Thành</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">Quận/Huyện</label>
+                            <label class="block text-xs text-gray-500 mb-1">Quận/Huyện <span class="text-red-500">*</span></label>
                             <select id="district" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
                                 <option value="">Chọn Quận/Huyện</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">Phường/Xã</label>
+                            <label class="block text-xs text-gray-500 mb-1">Phường/Xã <span class="text-red-500">*</span></label>
                             <select id="ward" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
                                 <option value="">Chọn Phường/Xã</option>
                             </select>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">Số nhà, tên đường</label>
+                        <label class="block text-xs text-gray-500 mb-1">Số nhà, tên đường <span class="text-red-500">*</span></label>
                         <input type="text" id="street" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ví dụ: 123 Đường Nguyễn Văn Cừ">
                     </div>
                     <input type="hidden" name="shipping_address" id="full_shipping_address">
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại <span class="text-red-500">*</span></label>
                     <input type="text" 
                            id="phone_number" 
                            name="phone_number" 

@@ -21,7 +21,6 @@ class Rule extends Model
         'order' => 'integer'
     ];
 
-    // Relationships
     public function violations()
     {
         return $this->hasMany(PostViolation::class);

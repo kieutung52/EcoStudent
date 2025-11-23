@@ -42,7 +42,7 @@ class HomeController extends Controller
      */
     public function showPost($id)
     {
-        $post = Post::with(['user', 'products', 'comments.user', 'university', 'likes'])
+        $post = Post::with(['user', 'products', 'university', 'likes'])
             ->findOrFail($id);
         
         // Tăng view

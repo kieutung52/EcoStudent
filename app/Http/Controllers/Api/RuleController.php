@@ -8,10 +8,6 @@ use Illuminate\Http\Request;
 
 class RuleController extends Controller
 {
-    /**
-     * Lấy danh sách luật lệ (Public)
-     * GET /api/rules
-     */
     public function index()
     {
         $rules = Rule::where('is_active', true)
@@ -22,10 +18,6 @@ class RuleController extends Controller
         return response()->json($rules);
     }
 
-    /**
-     * Lấy tất cả luật lệ (Admin only)
-     * GET /api/admin/rules
-     */
     public function indexAdmin()
     {
         $rules = Rule::orderBy('order')
@@ -35,10 +27,6 @@ class RuleController extends Controller
         return response()->json($rules);
     }
 
-    /**
-     * Tạo luật lệ mới (Admin only)
-     * POST /api/admin/rules
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -61,10 +49,6 @@ class RuleController extends Controller
         ], 201);
     }
 
-    /**
-     * Cập nhật luật lệ (Admin only)
-     * PUT /api/admin/rules/{id}
-     */
     public function update(Request $request, $id)
     {
         $rule = Rule::findOrFail($id);
@@ -84,10 +68,6 @@ class RuleController extends Controller
         ]);
     }
 
-    /**
-     * Xóa luật lệ (Admin only)
-     * DELETE /api/admin/rules/{id}
-     */
     public function destroy($id)
     {
         $rule = Rule::findOrFail($id);

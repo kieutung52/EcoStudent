@@ -11,90 +11,14 @@ use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
-/**
- * AuthController - Xử lý xác thực và phân quyền người dùng
- * 
- * JWT AUTHENTICATION FLOW CHI TIẾT:
- * =================================
- * 
- * 1. REGISTER (Đăng ký):
- *    --------------------
- *    a. Client gửi POST /api/register với: name, email, password, password_confirmation, phone, university_id
- *    b. Server validate dữ liệu
- *    c. Hash password bằng bcrypt (tự động qua User model cast 'hashed')
- *    d. Tạo User với role='USER', status='ACTIVE', is_active=true
- *    e. Tạo JWT token bằng JWTAuth::fromUser($user)
- *       - Token chứa: user_id, role, status, email (từ getJWTCustomClaims())
- *       - Token có thời gian hết hạn (TTL) được cấu hình trong config/jwt.php
- *    f. Trả về token và thông tin user
- *    g. Client lưu token (localStorage/sessionStorage) để dùng cho các request sau
- * 
- * 2. LOGIN (Đăng nhập):
- *    -------------------
- *    a. Client gửi POST /api/login với: email, password
- *    b. Server kiểm tra credentials bằng Auth::attempt()
- *       - Auth::attempt() tự động hash password và so sánh với DB
- *       - Nếu đúng, tạo session và attach user vào request
- *    c. Kiểm tra trạng thái tài khoản (is_active, status)
- *    d. Tạo JWT token bằng JWTAuth::fromUser($user)
- *    e. Trả về token và thông tin user
- * 
- * 3. AUTHENTICATED REQUESTS (Các request yêu cầu đăng nhập):
- *    ---------------------------------------------------------
- *    a. Client gửi request kèm token trong header:
- *       Authorization: Bearer {token}
- *    b. Middleware 'auth:api' (JWT) sẽ:
- *       - Extract token từ header Authorization
- *       - Verify token signature (kiểm tra chữ ký)
- *       - Verify token expiration (kiểm tra hết hạn)
- *       - Decode token để lấy user_id và claims
- *       - Load User từ database bằng user_id
- *       - Attach User vào request ($request->user())
- *    c. Controller có thể truy cập user qua $request->user() hoặc auth()->user()
- * 
- * 4. LOGOUT (Đăng xuất):
- *    --------------------
- *    a. Client gửi POST /api/logout với token trong header
- *    b. Server invalidate token bằng JWTAuth::invalidate()
- *       - Token bị đưa vào blacklist (nếu có cấu hình)
- *       - Token không thể sử dụng lại được
- *    c. Trả về thông báo thành công
- *    d. Client xóa token khỏi storage
- * 
- * 5. REFRESH TOKEN (Làm mới token):
- *    --------------------------------
- *    a. Khi token gần hết hạn, client có thể refresh
- *    b. Client gửi POST /api/refresh với token hiện tại
- *    c. Server verify token (có thể hết hạn nhưng vẫn trong refresh window)
- *    d. Tạo token mới với thời gian hết hạn mới
- *    e. Trả về token mới
- * 
- * PASSWORD HASHING:
- * ================
- * - Password được hash tự động khi tạo/update User nhờ cast 'hashed' trong User model
- * - Sử dụng bcrypt algorithm với cost factor 10 (mặc định Laravel)
- * - Hash::check($plainPassword, $hashedPassword) để so sánh khi login
- * - Password không bao giờ được lưu dạng plain text trong database
- */
 class AuthController extends Controller
 {
-    /**
-     * Đăng ký tài khoản mới
-     * POST /api/register
-     * 
-     * Flow:
-     * 1. Validate input (name, email, password, phone)
-     * 2. Hash password (tự động qua User model)
-     * 3. Tạo user với role='USER', status='ACTIVE'
-     * 4. Tạo JWT token
-     * 5. Trả về token và user info
-     */
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed', // Cần field password_confirmation
+            'password' => 'required|string|min:6|confirmed', 
             'phone' => 'required|string|max:15',
             'university_id' => 'nullable|exists:universities,id'
         ]);
@@ -103,20 +27,18 @@ class AuthController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        // Tạo user - password sẽ được hash tự động nhờ cast 'hashed' trong User model
+        
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password, // Sẽ được hash tự động
+            'password' => $request->password, 
             'phone' => $request->phone,
             'university_id' => $request->university_id,
-            'role' => 'USER', // Mặc định là USER
-            'status' => 'ACTIVE', // Mặc định là ACTIVE
+            'role' => 'USER', 
+            'status' => 'ACTIVE', 
             'is_active' => true
         ]);
 
-        // Tạo JWT token từ user
-        // Token sẽ chứa: user_id, role, status, email (từ getJWTCustomClaims())
         $token = JWTAuth::fromUser($user);
 
         return response()->json([
@@ -124,26 +46,14 @@ class AuthController extends Controller
             'data' => $user->load('university'),
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'expires_in' => config('jwt.ttl') * 60 // Thời gian hết hạn (giây)
+            'expires_in' => config('jwt.ttl') * 60
         ], 201);
     }
 
-    /**
-     * Đăng nhập
-     * POST /api/login
-     * 
-     * Flow:
-     * 1. Validate email và password
-     * 2. Auth::attempt() kiểm tra credentials (tự động hash và so sánh)
-     * 3. Kiểm tra trạng thái tài khoản (is_active, status)
-     * 4. Tạo JWT token
-     * 5. Trả về token và user info
-     */
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
 
-        // Validate input
         $validator = Validator::make($credentials, [
             'email' => 'required|email',
             'password' => 'required|string|min:6'
@@ -153,10 +63,6 @@ class AuthController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        // Auth::attempt() sẽ:
-        // - Tìm user theo email
-        // - Hash password input và so sánh với password trong DB
-        // - Nếu đúng, tạo session và attach user vào request
         if (!$token = Auth::attempt($credentials)) {
             return response()->json([
                 'message' => 'Thông tin đăng nhập không chính xác'
@@ -165,7 +71,6 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // Kiểm tra trạng thái tài khoản
         if ($user->status === 'BANNED') {
             Auth::logout();
             return response()->json([
@@ -180,7 +85,6 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Tạo JWT token từ user đã authenticated
         $token = JWTAuth::fromUser($user);
 
         $response = [
@@ -191,7 +95,6 @@ class AuthController extends Controller
             'user' => $user->load('university')
         ];
 
-        // Nếu status là WARNING, thêm warning_message vào response
         if ($user->status === 'WARNING') {
             $response['warning_message'] = 'Tài khoản của bạn đã vi phạm nội quy nếu tiếp tục vi phạm thêm lỗi trong vòng 1 tuần nữa thì có thể sẽ bị khóa tài khoản';
         }
@@ -199,24 +102,11 @@ class AuthController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * Đăng xuất
-     * POST /api/logout
-     * 
-     * Flow:
-     * 1. Lấy token từ request (qua middleware auth:api)
-     * 2. Invalidate token (đưa vào blacklist)
-     * 3. Logout session (nếu có)
-     * 4. Trả về thông báo thành công
-     */
     public function logout(Request $request)
     {
         try {
-            // Invalidate token - đưa token vào blacklist
-            // Token này sẽ không thể sử dụng lại được
             JWTAuth::invalidate(JWTAuth::getToken());
 
-            // Logout session (nếu có)
             Auth::logout();
 
             return response()->json([
@@ -229,20 +119,9 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Làm mới token
-     * POST /api/refresh
-     * 
-     * Flow:
-     * 1. Lấy token hiện tại từ request
-     * 2. Verify token (có thể hết hạn nhưng vẫn trong refresh window)
-     * 3. Tạo token mới với thời gian hết hạn mới
-     * 4. Trả về token mới
-     */
     public function refresh()
     {
         try {
-            // Refresh token - tạo token mới từ token hiện tại
             $token = JWTAuth::refresh(JWTAuth::getToken());
 
             return response()->json([
@@ -257,26 +136,13 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Lấy thông tin profile của user hiện tại
-     * GET /api/profile
-     * 
-     * Flow:
-     * 1. Middleware auth:api đã load user vào request
-     * 2. Trả về thông tin user kèm relationships
-     */
     public function profile(Request $request)
     {
-        // $request->user() được set bởi middleware auth:api sau khi verify JWT token
         $user = $request->user()->load('university');
         
         return response()->json($user);
     }
 
-    /**
-     * Cập nhật profile
-     * PUT /api/profile
-     */
     public function updateProfile(Request $request)
     {
         $user = $request->user();
@@ -300,10 +166,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Đổi mật khẩu
-     * POST /api/change-password
-     */
     public function changePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -317,15 +179,12 @@ class AuthController extends Controller
 
         $user = $request->user();
 
-        // Kiểm tra mật khẩu hiện tại
-        // Hash::check() so sánh plain text với hash trong DB
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'message' => 'Mật khẩu hiện tại không chính xác'
             ], 400);
         }
 
-        // Cập nhật mật khẩu mới (sẽ được hash tự động)
         $user->password = $request->new_password;
         $user->save();
 
@@ -334,20 +193,14 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Danh sách users (Admin only)
-     * GET /api/admin/users
-     */
     public function listUsers(Request $request)
     {
         $query = User::with('university');
 
-        // Filter theo status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
-        // Filter theo role
         if ($request->has('role')) {
             $query->where('role', $request->role);
         }
@@ -357,10 +210,6 @@ class AuthController extends Controller
         return response()->json($users);
     }
 
-    /**
-     * Cập nhật trạng thái user (Admin only)
-     * PUT /api/admin/users/{id}/status
-     */
     public function updateUserStatus(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -378,10 +227,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Khóa tài khoản user (Admin only)
-     * PUT /api/admin/users/{id}/ban
-     */
     public function banUser($id)
     {
         $user = User::findOrFail($id);

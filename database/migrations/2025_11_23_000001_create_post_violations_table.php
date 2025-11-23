@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('post_id')->constrained()->onDelete('cascade');
             $table->foreignId('rule_id')->constrained()->onDelete('cascade');
-            $table->foreignId('admin_id')->nullable()->constrained('users')->onDelete('set null'); // Admin xử lý
-            $table->text('note')->nullable(); // Ghi chú thêm
+            $table->foreignId('admin_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->text('note')->nullable();
             $table->timestamps();
         });
     }
