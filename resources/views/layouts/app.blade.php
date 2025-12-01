@@ -92,7 +92,7 @@
     <div class="flex-1 flex flex-col min-w-0">
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto  ">
-            <div class="max-w-7xl mx-auto px-4 py-6 min-h-[calc(100vh-100px)]">
+            <div class="max-w-8xl mx-auto px-4 py-6 min-h-[calc(100vh-100px)]">
                 @yield('content')
             </div>
             

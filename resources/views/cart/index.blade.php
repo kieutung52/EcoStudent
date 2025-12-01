@@ -148,6 +148,8 @@ function attachCartEvents() {
             const item = cartItems.find(i => i.id == cartId);
             if (item && item.quantity > 1) {
                 await updateCart(cartId, item.quantity - 1);
+            } else if (item && item.quantity === 1) {
+                await removeFromCart(cartId);
             }
         });
     });

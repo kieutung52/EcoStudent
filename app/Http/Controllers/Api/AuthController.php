@@ -13,6 +13,13 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
+    protected $otpService;
+
+    public function __construct(\App\Services\OtpService $otpService)
+    {
+        $this->otpService = $otpService;
+    }
+
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -27,7 +34,6 @@ class AuthController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -39,15 +45,63 @@ class AuthController extends Controller
             'is_active' => true
         ]);
 
-        $token = JWTAuth::fromUser($user);
+        // Send OTP
+        $this->otpService->generateAndSendOtp($user);
 
         return response()->json([
-            'message' => 'Đăng ký thành công',
-            'data' => $user->load('university'),
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'expires_in' => config('jwt.ttl') * 60
+            'message' => 'Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP.',
+            'email' => $user->email
         ], 201);
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'otp' => 'required|string'
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user->email_verified_at) {
+            return response()->json(['message' => 'Tài khoản đã được xác thực'], 200);
+        }
+
+        if ($this->otpService->verifyOtp($user, $request->otp)) {
+            $user->email_verified_at = now();
+            $user->save();
+
+            $token = JWTAuth::fromUser($user);
+
+            return response()->json([
+                'message' => 'Xác thực thành công',
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'expires_in' => config('jwt.ttl') * 60,
+                'user' => $user->load('university')
+            ]);
+        }
+
+        return response()->json(['message' => 'Mã OTP không chính xác hoặc đã hết hạn'], 400);
+    }
+
+    public function resendOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user->email_verified_at) {
+            return response()->json(['message' => 'Tài khoản đã được xác thực'], 400);
+        }
+
+        if ($this->otpService->generateAndSendOtp($user)) {
+            return response()->json(['message' => 'Đã gửi lại mã OTP']);
+        }
+
+        return response()->json(['message' => 'Không thể gửi mã OTP. Vui lòng thử lại sau.'], 500);
     }
 
     public function login(Request $request)
@@ -70,6 +124,15 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
+
+        if (!$user->email_verified_at) {
+            Auth::logout();
+            return response()->json([
+                'message' => 'Tài khoản chưa được xác thực email. Vui lòng xác thực.',
+                'email' => $user->email,
+                'requires_verification' => true
+            ], 403);
+        }
 
         if ($user->status === 'BANNED') {
             Auth::logout();
@@ -239,6 +302,26 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Đã khóa tài khoản',
             'data' => $user->load('university')
+        ]);
+    }
+
+    public function showPublicProfile($id)
+    {
+        $user = User::with('university')->findOrFail($id);
+
+        // Hide sensitive info
+        $user->makeHidden(['email', 'phone', 'role', 'status', 'is_active', 'email_verified_at', 'created_at', 'updated_at']);
+        
+        // Get active posts
+        $posts = \App\Models\Post::where('user_id', $id)
+            ->where('status', 'APPROVED')
+            ->with(['category', 'images'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return response()->json([
+            'user' => $user,
+            'posts' => $posts
         ]);
     }
 }

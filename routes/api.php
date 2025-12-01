@@ -27,6 +27,8 @@ use App\Http\Controllers\Api\ReportController;
 // Authentication
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 
 // Master Data (Danh mục công khai)
 Route::get('/universities', [UniversityController::class, 'index']);
@@ -37,6 +39,7 @@ Route::get('/rules', [\App\Http\Controllers\Api\RuleController::class, 'index'])
 Route::get('/posts', [PostController::class, 'index']); // Newsfeed - có thể filter
 Route::get('/posts/{id}', [PostController::class, 'show']); // Chi tiết bài viết
 Route::get('/users/{userId}/reviews', [ReviewController::class, 'index']); // Lấy đánh giá của user (Public)
+Route::get('/users/{id}', [AuthController::class, 'showPublicProfile']); // Trang cá nhân người bán
 
 // ==================== PROTECTED ROUTES (Yêu cầu JWT authentication) ====================
 Route::middleware('auth:api')->group(function () {

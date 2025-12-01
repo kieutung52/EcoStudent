@@ -126,12 +126,8 @@ document.getElementById('register-form').addEventListener('submit', async functi
         const result = await response.json();
 
         if (response.ok) {
-            // Lưu token và user vào localStorage
-            localStorage.setItem('jwt_token', result.access_token);
-            localStorage.setItem('user', JSON.stringify(result.data));
-            
-            // Redirect về trang chủ
-            window.location.href = '/';
+            // Redirect to OTP verification
+            window.location.href = `/verify-otp?email=${encodeURIComponent(data.email)}`;
         } else {
             // Hiển thị lỗi
             if (result.errors) {

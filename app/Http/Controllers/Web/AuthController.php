@@ -76,16 +76,70 @@ class AuthController extends Controller
             if ($response->successful()) {
                 $data = $response->json();
                 
-                session(['jwt_token' => $data['access_token']]);
-                session(['user' => $data['data']]);
-                
-                return redirect()->route('home')->with('success', 'Đăng ký thành công!');
+                // Redirect to OTP verification
+                return redirect()->route('auth.verify-otp', ['email' => $request->email])
+                    ->with('success', 'Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.');
             } else {
                 $errors = $response->json();
                 return back()->withErrors($errors);
             }
         } catch (\Exception $e) {
             return back()->withErrors(['email' => 'Có lỗi xảy ra. Vui lòng thử lại.']);
+        }
+    }
+
+    public function showVerifyOtp(Request $request)
+    {
+        $email = $request->query('email');
+        return view('auth.verify-otp', compact('email'));
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|string'
+        ]);
+
+        try {
+            $response = Http::post(url('/api/verify-otp'), [
+                'email' => $request->email,
+                'otp' => $request->otp
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                
+                session(['jwt_token' => $data['access_token']]);
+                session(['user' => $data['user']]);
+                
+                return redirect()->route('home')->with('success', 'Xác thực thành công!');
+            } else {
+                return back()->withErrors(['otp' => $response->json()['message'] ?? 'Xác thực thất bại']);
+            }
+        } catch (\Exception $e) {
+            return back()->withErrors(['otp' => 'Có lỗi xảy ra. Vui lòng thử lại.']);
+        }
+    }
+
+    public function resendOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        try {
+            $response = Http::post(url('/api/resend-otp'), [
+                'email' => $request->email
+            ]);
+
+            if ($response->successful()) {
+                return back()->with('success', 'Đã gửi lại mã OTP');
+            } else {
+                return back()->withErrors(['otp' => $response->json()['message'] ?? 'Gửi lại OTP thất bại']);
+            }
+        } catch (\Exception $e) {
+            return back()->withErrors(['otp' => 'Có lỗi xảy ra. Vui lòng thử lại.']);
         }
     }
 

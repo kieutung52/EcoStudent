@@ -5,7 +5,7 @@
 @section('content')
 <div class="flex gap-6">
     <!-- Sidebar Left (Filters) -->
-    <aside class="w-64 bg-white rounded-lg shadow-lg p-4 h-fit sticky top-20">
+    <aside class="w-96 bg-white rounded-lg shadow-lg p-4 h-fit sticky top-20">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-semibold">Bộ lọc</h2>
             <button id="clear-filters" class="text-sm text-blue-600 hover:underline">Xóa bộ lọc</button>
@@ -67,7 +67,7 @@
     </aside>
 
     <!-- Main Feed -->
-    <div class="flex-1 max-w-2xl">
+    <div class="flex-1 max-w-3xl">
         <div id="posts-container">
             @foreach($posts as $post)
                 @if ($post->status === 'pending' || $post->status === 'rejected' || $post->status === 'hidden')

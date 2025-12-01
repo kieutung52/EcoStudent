@@ -16,7 +16,13 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('auth.register');
 Route::post('/register', [AuthController::class, 'register']);
+Route::get('/verify-otp', [AuthController::class, 'showVerifyOtp'])->name('auth.verify-otp');
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->name('auth.resend-otp');
 Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
+
+// Seller Profile
+Route::get('/seller/{id}', [HomeController::class, 'showSellerProfile'])->name('seller.profile');
 
 // Protected routes (require authentication via JWT in localStorage)
 Route::get('/profile', [ProfileController::class, 'index'])->name('profile');

@@ -50,5 +50,18 @@ class HomeController extends Controller
 
         return view('post-detail', compact('post'));
     }
+
+    public function showSellerProfile($id)
+    {
+        $seller = \App\Models\User::with('university')->findOrFail($id);
+        
+        $posts = Post::with(['user', 'products', 'university', 'likes'])
+            ->where('user_id', $id)
+            ->where('status', 'APPROVED')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('profile.seller', compact('seller', 'posts'));
+    }
 }
 

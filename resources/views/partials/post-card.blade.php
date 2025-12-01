@@ -8,15 +8,19 @@
     $isLiked = false; // Will be set via JavaScript
 @endphp
 
-<div class="bg-white rounded-lg shadow-md mb-4 overflow-hidden">
+<div class="bg-white rounded-lg shadow-md mb-4 overflow-hidden w-[1000px]">
     <!-- Post Header - Account Info -->
     <div class="p-4 border-b">
         <div class="flex items-center space-x-3">
-            <img src="{{ $post->user->avatar ? asset('storage/' . $post->user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($post->user->name) }}" 
-                 alt="{{ $post->user->name }}" 
-                 class="w-10 h-10 rounded-full object-cover">
+            <a href="{{ route('seller.profile', $post->user->id) }}">
+                <img src="{{ $post->user->avatar ? asset('storage/' . $post->user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($post->user->name) }}" 
+                     alt="{{ $post->user->name }}" 
+                     class="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity">
+            </a>
             <div class="flex-1">
-                <h3 class="font-semibold text-gray-900">{{ $post->user->name }}</h3>
+                <a href="{{ route('seller.profile', $post->user->id) }}" class="font-semibold text-gray-900 hover:underline">
+                    {{ $post->user->name }}
+                </a>
                 <div class="flex items-center space-x-2 text-sm text-gray-500">
                     <span>{{ $post->created_at->diffForHumans() }}</span>
                     @if($post->university)
@@ -39,7 +43,7 @@
     <!-- Products Grid (Facebook style) -->
     @if($productCount > 0)
         <div class="px-4 pb-4">
-            <div class="grid grid-cols-2 gap-2 rounded-lg overflow-hidden" style="max-height: 650px;">
+            <div class="grid grid-cols-2 gap-2 rounded-lg overflow-hidden" style="max-height: 1000px;">
                 @foreach($displayProducts as $index => $product)
                     <div class="relative group cursor-pointer product-item" 
                          data-product-id="{{ $product->id }}"
